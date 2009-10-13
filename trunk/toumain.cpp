@@ -1,4 +1,5 @@
 #include<stdio.h>
+#include<stdlib.h>
 #include <iostream>
 using namespace std;
 #include "touheader.h"
@@ -8,24 +9,28 @@ using namespace std;
 #include<arpa/inet.h>
 #include<unistd.h>
 #include<string.h>
+#include<sstream>
 #include <netdb.h>
 
 void addTouHd(char *buf, int n, touheader *th) {
-  strncpy(buf,(char*) th->seq, sizeof(th->seq));
-  strncat(buf,(char*) th->magic, sizeof(th->magic));
-  strncat(buf,(char*) th->ack_seq, sizeof(th->ack_seq));
-  strncat(buf,(char*) th->res1,1);
-  strncat(buf,(char*) th->doff,1);
-  strncat(buf,(char*) th->fin, 1);
-  strncat(buf,(char*) th->syn, 1);
-  strncat(buf,(char*) th->rst, 1);
-  strncat(buf,(char*) th->psh, 1);
-  strncat(buf,(char*) th->ack, 1);
-  strncat(buf,(char*) th->rev, 1);
-  strncat(buf,(char*) th->ece, 1);
-  strncat(buf,(char*) th->cwr, 1);
-  strncat(buf,(char*) th->wnd, 1);
-
+  memset(buf, 0x00, n);
+  string a;
+  stringstream outputv;
+  outputv << th->seq;
+  a = outputv.str();
+  strncpy(buf,a.c_str(), sizeof(a));
+  outputv << th->mag;
+  a = outputv.str();
+  strncpy(buf,a.c_str(), sizeof(a));
+  outputv << th->ack_seq;
+  a = outputv.str();
+  strncpy(buf,a.c_str(), sizeof(a));
+  outputv << th->flags;
+  a = outputv.str();
+  strncat(buf,a.c_str(), sizeof(a));
+  outputv << th->wnd;
+  a = outputv.str();
+  strncat(buf,a.c_str(), sizeof(a));
 };
 
 class toumain {
@@ -82,13 +87,14 @@ class toumain {
 	*/
 	int tou_connect() {
 	int rv;
-	unsigned long seqnum = 0;
-	t.syn = ++seqnum;
-	t.ack = 1;
+	t.seq = (u_long)100;
+	t.flags = t.flags | TOU_SYN | TOU_ACK;
 	char msgbuf[101] = {0};
-        addTouHd(buf,sizeof(buf),&t);
-	rv = sendto(sd, buf, sizeof(buf), 0, (struct sockaddr*)&socket2, sizeof(struct sockaddr_in));
-	printf("%d, %s, %d \n", sd, buf, sizeof(buf));
+        addTouHd(msgbuf ,sizeof(msgbuf),&t);
+	cout<<msgbuf <<std::endl;
+        strncat(msgbuf, buf, sizeof(buf));
+	rv = sendto(sd, msgbuf, sizeof(msgbuf), 0, (struct sockaddr*)&socket2, sizeof(struct sockaddr_in));
+	/*printf("%d, %s, %d \n", sd, buf, sizeof(buf));*/
 	perror("talker: sendto");
 	return rv;
 	}//*/

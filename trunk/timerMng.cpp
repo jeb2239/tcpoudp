@@ -1,40 +1,43 @@
 #include "timer.h"
+minTmHeapType timerheap;         // STL, Priority_queue(min-heap)
+timerDequeType timerdeque;       // STL, Queue
+boost::mutex timermutex;
 
 /*********************************************
  * Initialize the Queue and Map 
  * ******************************************/
 timerMng::timerMng()
-  : id(0), 
-    ms(0)
 {
+  timercker = new timerCk();
+
+  //Make sure timerheap is empty
+  while( !timerheap.empty() ) timerheap.pop();
   std::cout << "*** timerMng built ***\n";
 }
+
 /*********************************************
- * 1. Reg a key pair into the map
- * 2. Init a timer in new thread
+ * 1. Lock the resources.
+ * 2. New a timer, and put intot timerheap
  ********************************************/
-bool timerMng::add(unsigned int id, long ms){
-  stArg(id, ms);
-  //New a timer object. It triggered the timer thread as well
-  atimer = new aTimer(id, ms);
-  //Insert the id and *timer into bimap for future operation
-  timerbimap.insert( timerPair(id, atimer) );
-  std::cout << "atimer(ID:"<<id<<") is added. "<<atimer<<std::endl;
+bool timerMng::add(conn_id cid, time_id tid, long ms, packet_id pid){
+  boost::mutex::scoped_lock lock(timermutex);
+  timernode = new node_t(cid, tid, getCurMs()+ms, pid);  
+  timerheap.push(*timernode);
+  std::cout << "timer(ms: "<<timernode->ms <<") (id: "<<timernode->c_id << " pid: " << timernode->p_id<<" is added  "<<ms <<" "<<getCurMs() <<" "<< timernode<<std::endl;
 }
+
 /*********************************************
- * 1. Delete the timer by specified id
+ * 1. Delete the timer by conn_id and time_id
+ * Reg the id into vector
  * ******************************************/
-bool timerMng::delete_timer(unsigned int id){
-  std::cout << "Killing TIMER ID: "<<id<<"; OBJ: "<<timerbimap.left.at(id)<<std::endl;
-  delete timerbimap.left.at(id);
-  timerbimap.left.erase(id);
-  std::cout << "Killing BIMAP PAIR ID: "<<id<<std::endl;
-  /*timeriter = timerbimap.left.find(id);*/
+bool timerMng::delete_timer(conn_id cid, time_id tid, packet_id pid){
+  if(timercker->addDelnode(cid, tid, pid)) std::cout<< " *** Add del Anchor CID: "<<cid << pid<<" TID: "<<tid<<" *** "<<std::endl;
 }
-bool timerMng::reset(unsigned int id){
+
+bool timerMng::reset(conn_id cid, time_id tid, packet_id pid){
 
 }
-bool timerMng::reset(unsigned int id, long ms){
+bool timerMng::reset(conn_id cid, time_id tid, long ms, packet_id pid){
 
 }
 bool timerMng::deleteall(){
@@ -43,17 +46,4 @@ bool timerMng::deleteall(){
 bool timerMng::resetall(){
 
 }
-void timerMng::stArg(unsigned int id_, long ms_){
-  id = id_;
-  ms = ms_;
-}
-/*
-void * timerMng::timerEntryPt(void *ms){
-  struct timerData timerdata;
-  timerdata.id = 345;
-  timerdata.elapsed = (unsigned long) ms;
 
-  pthread_detach(pthread_self());
-  aTimer timer(timerdata.id, timerdata.elapsed);
-}
-*/

@@ -66,10 +66,10 @@ class toumain {
 	int rv, control=0;
 	size_t len = sizeof(sockaddr);
 	rv = recvfrom(sd, buf, 50, 0, (struct sockaddr *)&socket2, &len);
-	while(control)
+	cout << buf <<std::endl;
         
 
-	return rv;
+	return true;
 	}//*/
 };
 	
@@ -90,13 +90,14 @@ int main()
 	cout<<"Bind" << sd <<endl;
 	unsigned long len;
 	len = sizeof tm.t;
-	cout << tm.t.syn <<std::endl;
+	cout << tm.t.flags <<std::endl;
 	cout<< len <<endl;
 	//sd = tou_connect();
 	//cout << sd << endl;
 	while(1) {
 	sd = tm.tou_accept();
 	cout << sd << endl;
+	cout << "get the msg from client connect() \n";
 	}//sd = tm.tou_listen();
 	//cout<<sd<<endl;
 	return 0;
