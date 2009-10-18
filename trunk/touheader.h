@@ -16,7 +16,6 @@ typedef unsigned char	u_char;
 #define TOUT_KEEP		2
 #define TOUT_2MSL		3
 
-#define TOU_MSS			1400
 //States
 #define TOUS_CLOSED			0
 #define TOUS_LISTEN			1
@@ -29,16 +28,7 @@ typedef unsigned char	u_char;
 #define TOUS_LAST_ACK		8
 #define TOUS_FIN_WAIT_2		9
 #define TOUS_TIME_WAIT		10
-/*
-#define	TOU_FIN		1
-#define	TOU_SYN		2
-#define	TOU_RST		4
-#define	TOU_PSH		8
-#define	TOU_ACK		10
-#define	TOU_RSV		20
-#define	TOU_ECE		40
-#define	TOU_CWR		80
-#define	TOU_FLAGS (TOU_FIN|TOU_SYN|TOU_RST|TOU_PSH|TOU_ACK|TOU_RSV|TOU_ECE|TOU_CWR)
+
 /******************************************************
  * ToU header
  * ***************************************************/
@@ -60,8 +50,6 @@ class touheader {
 
 	u_short window;
 	u_short check;
-	u_short urg_ptr;
-    u_short	wnd:16;
 };
 
 /******************************************************
@@ -70,7 +58,7 @@ class touheader {
 class toupkg {
   public:
     touheader		*touhdr;
-    char			*payload;
+//    char			*payload;
 };
 
 /******************************************************
@@ -89,7 +77,7 @@ class toucb {
     u_long		snd_w11;		//send wnd update seg seq #
     u_long		snd_w12;		//send wnd update seg ack #
     u_long		iss;			//initial send seq #
-    u_long		snd_wnd;		//send window
+    u_long		snd_wnd;		//sender's windoe
 
     u_long		rcv_wnd;		//rcv window
     u_long		rcv_nxt;		//rcv next
@@ -99,7 +87,7 @@ class toucb {
  * Additional var for this implementation
  */
     u_long		snd_cwnd;		//congestion-controlled wnd
-    u_long		snd_ssthresh;		//snd_cwnd size threshold for slow start
+    u_long		snd_awnd;		//sender's advertisec window from recver    u_long		snd_ssthresh;	//snd_cwnd size threshold for slow start
     						//exponential to linear switch
 };
 
@@ -134,4 +122,3 @@ class tou {
     int tou_close();
 };	
 
-socktb socktable;
