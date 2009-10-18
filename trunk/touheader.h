@@ -12,13 +12,14 @@ typedef unsigned char	u_char;
 //Timers
 #define TOUT_TIMERS		4
 #define TOUT_REXMIT		0
-#define TOUT_PERSIST		1
+#define TOUT_PERSIST	1
 #define TOUT_KEEP		2
 #define TOUT_2MSL		3
 
+#define TOU_MSS			1400
 //States
-#define TOUS_CLOSED		0
-#define TOUS_LISTEN		1
+#define TOUS_CLOSED			0
+#define TOUS_LISTEN			1
 #define TOUS_SYN_SENT		2
 #define TOUS_SYN_RECEIVED	3
 #define TOUS_ESTABLISHED	4
@@ -28,7 +29,16 @@ typedef unsigned char	u_char;
 #define TOUS_LAST_ACK		8
 #define TOUS_FIN_WAIT_2		9
 #define TOUS_TIME_WAIT		10
-
+/*
+#define	TOU_FIN		1
+#define	TOU_SYN		2
+#define	TOU_RST		4
+#define	TOU_PSH		8
+#define	TOU_ACK		10
+#define	TOU_RSV		20
+#define	TOU_ECE		40
+#define	TOU_CWR		80
+#define	TOU_FLAGS (TOU_FIN|TOU_SYN|TOU_RST|TOU_PSH|TOU_ACK|TOU_RSV|TOU_ECE|TOU_CWR)
 /******************************************************
  * ToU header
  * ***************************************************/
@@ -37,19 +47,21 @@ class touheader {
     u_long		seq;
     u_long		mag;
     u_long		ack_seq;
-    u_short		doff:4,
-			rsv:4;
-    u_char		flags;
-#define	TOU_FIN		0x01
-#define	TOU_SYN		0x02
-#define	TOU_RST		0x04
-#define	TOU_PSH		0x08
-#define	TOU_ACK		0x10
-#define	TOU_RSV		0x20
-#define	TOU_ECE		0x40
-#define	TOU_CWR		0x80
-#define	TOU_FLAGS (TOU_FIN|TOU_SYN|TOU_RST|TOU_PSH|TOU_ACK|TOU_RSV|TOU_ECE|TOU_CWR)
-    u_short		wnd:16;
+    
+    u_short doff:4;
+	u_short res1:4;
+	u_short res2:2;
+	u_short urg:1;
+	u_short ack:1;
+	u_short psh:1;
+	u_short rst:1;
+	u_short syn:1;
+	u_short fin:1;
+
+	u_short window;
+	u_short check;
+	u_short urg_ptr;
+    u_short	wnd:16;
 };
 
 /******************************************************
@@ -58,7 +70,7 @@ class touheader {
 class toupkg {
   public:
     touheader		*touhdr;
-    char		*payload;
+    char			*payload;
 };
 
 /******************************************************
@@ -67,7 +79,7 @@ class toupkg {
 class toucb {
   public:
     short		t_state;		//11 connection states
-    short		t_timer[TOU_TIMERS];	//4 timers
+    short		t_timer[TOUT_TIMERS];	//4 timers
     u_short		t_flags;		//pending
 /*
  * WND & SEQ control. See RFC 783
@@ -101,8 +113,8 @@ class socktb {
     int			sockd;			//socket file descriptor
     u_short 		sport;
     u_short 		dport;
-    u_long  		sip;
-    u_long  		dip;
+    string  		sip;
+    string  		dip;
 
 };
 
@@ -122,3 +134,4 @@ class tou {
     int tou_close();
 };	
 
+socktb socktable;
