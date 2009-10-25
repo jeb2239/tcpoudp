@@ -17,7 +17,8 @@ class toumain {
  	
 	public :
 	unsigned long test;
-	touheader t;
+	toupkg tp;
+	//touheader t;
 	socktb s;
 	int tou_close();
 	struct sockaddr_in socket1;
@@ -30,19 +31,19 @@ class toumain {
 	char buf[50],buf1[50],buf3[50],buf4[50],buf5[50];
 	timerMng timermng;
 	
-	void converttobyteorder(touheader t) {
-	t.seq = htonl(t.seq);
-    t.mag = htonl(t.mag);
-    t.ack_seq = htonl(t.ack_seq);
-    t.syn = htons(t.syn);
-    t.ack = htons(t.ack);
+	void converttobyteorder(toupkg tp) {
+	tp.t.seq = htonl(tp.t.seq);
+    tp.t.mag = htonl(tp.t.mag);
+    tp.t.ack_seq = htonl(tp.t.ack_seq);
+    tp.t.syn = htons(tp.t.syn);
+    tp.t.ack = htons(tp.t.ack);
     
     }
 	
-	void convertfrombyteorder(touheader t) {
-	t.seq = ntohl(t.seq);
-    t.mag = ntohl(t.seq);
-    t.ack_seq = ntohl(t.seq);
+	void convertfrombyteorder(toupkg tp) {
+	tp.t.seq = ntohl(tp.t.seq);
+    tp.t.mag = ntohl(tp.t.seq);
+    tp.t.ack_seq = ntohl(tp.t.seq);
     }
     
 	int tou_socket() {
@@ -69,35 +70,37 @@ class toumain {
 	int tou_accept() {
 		int rv, control=0, flagforsyn = 1;
 		size_t len = sizeof(sockaddr);
-		converttobyteorder(t);
-		
+		converttobyteorder(tp);
+		cout << endl << " INSIDE TOU_ACCEPT () " <<endl;
 		// receive first handshake
 		
-		rv = recvfrom(sd, &t, sizeof t, 0, (struct sockaddr *)&socket2, &len);
-		cout << "seq no received from client : " << t.seq<<endl;
-		cout << "mag no received from client : " << t.mag<<endl;
+		rv = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr *)&socket2, &len);
+		cout << "seq no received from client : " << tp.t.seq<<endl;
+		cout << "mag no received from client : " << tp.t.mag<<endl;
 		
 		//send syn ack
-		t.ack_seq = t.seq + 1;
-		cout << "ack no sent to client : " << t.ack_seq<<endl;
-		t.seq = rand()%(u_long)65530;
-		t.syn = 1;
-		t.ack = 1;
-		converttobyteorder(t);
+		tp.t.ack_seq = tp.t.seq + 1;
+		cout << "ack no sent to client : " << tp.t.ack_seq<<endl;
+		tp.t.seq = rand()%(u_long)65530;
+		tp.t.syn = 1;
+		tp.t.ack = 1;
+		converttobyteorder(tp);
 		
-			sleep(9);
+			sleep(3);
 		
-				rv = sendto(sd, &t, sizeof(t), 0, (struct sockaddr*)&socket2, sizeof(struct sockaddr_in));
+				rv = sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr*)&socket2, sizeof(struct sockaddr_in));
 		
 		
 		//recv third handshake
 		
-		rv = recvfrom(sd, &t, sizeof t, 0, (struct sockaddr *)&socket2, &len);
-		convertfrombyteorder(t);
-		cout << "ack no received for the third handshake : " << t.ack_seq<<endl;
-		len = sizeof t;
+		rv = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr *)&socket2, &len);
+		convertfrombyteorder(tp);
+		cout << "ack no received for the third handshake : " << tp.t.ack_seq<<endl;
+		len = sizeof tp.t;
 		cout << " tou header size received :  "<< len<<endl; 
-		if (t.ack_seq == t.seq + 1) cout<<"SUCCESS !!!" << endl;
+		cout << endl << " LEAVING TOU_ACCEPT () " <<endl;
+		
+		if (tp.t.ack_seq == tp.t.seq + 1) cout<<"SUCCESS !!!" << endl;
 		return true;
 	}
 	
@@ -105,27 +108,34 @@ class toumain {
 	//-----------------	RECEIVE  --------------------------
 	
 	int tou_recv() {
-	memset(t.buf,0,50);
+	memset(tp.buf,0,50);
 	char buf12[10];
 	int no1;
 	memset(buf12,0,10);
 	size_t len = sizeof(sockaddr);
+	cout << endl << " INSIDE TOU_RECV () " <<endl;
+		
 		//timermng.add(1,3333,4000,101);
-		no1 = recvfrom(sd, &t, sizeof t, 0, (struct sockaddr *)&socket2, &len);
-		cout << " Data Received :  " << t.buf << endl; 
+		no1 = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr *)&socket2, &len);
+		cout << " Data Received :  " << tp.buf << endl; 
 		cout << " no of bytes received : " << no1 <<endl;
-	
+		if(tp.buf == "q" )
+		{
+			cout << " Connection closed by client "<< endl;
+			close(sd);
+			return true;
+		}
 		recvfrom(sd, buf12, sizeof (buf12), 0, (struct sockaddr *)&socket2, &len);
-		cout << buf12 << endl;
+		//cout << buf12 << endl;
 		int no = atoi(buf12);
 		cout << " No of bytes received is :  " << no << endl;
 		//recvfrom(sd, &t, sizeof t, 0, (struct sockaddr *)&socket2, &len);
-		convertfrombyteorder(t);
-		cout << " Sequence no received is :  " << t.seq << endl;
+		convertfrombyteorder(tp);
+		cout << " Sequence no received is :  " << tp.t.seq << endl;
 		if(no1 == no) {
-			t.ack_seq = t.seq + 1;
-			converttobyteorder(t);
-			sendto(sd, &t, sizeof(t), 0, (struct sockaddr*)&socket2, sizeof(struct sockaddr_in));
+			tp.t.ack_seq = tp.t.seq + 1;
+			converttobyteorder(tp);
+			sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr*)&socket2, sizeof(struct sockaddr_in));
 			cout << " Ack sent " <<endl; 
 		}
 		return true;
