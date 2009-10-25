@@ -12,35 +12,7 @@ using namespace std;
 #include<string.h>
 #include<sstream>
 #include<netdb.h>
-/*
-void addTouHd(char *buf, int n, touheader *th) {
-  memset(buf, 0x00, n);
-  string a,b,c,d,e,f;
-  stringstream outputv,outputv2,outputv3,outputv4,outputv5;
-  outputv << th->seq;
-  a = outputv.str();
-  cout<<"size of seq is "<<sizeof(th->seq)<<endl;
-  //a.append(3,'!');
-  strncpy(buf,a.c_str(), sizeof(a));
-  outputv2 << th->mag;
-  b = outputv2.str();
-  //b.append(3,'!');
-  strncat(buf,b.c_str(), sizeof(a));
-  outputv3 << th->ack_seq;
-  c = outputv3.str();
-  //c.append(3,'!');
-  strncat(buf,c.c_str(), sizeof(a));
-  //outputv4 << th->flags;
-  //cout<<"size of flags is "<<sizeof(th->flags	)<<endl;
-  d = outputv4.str();
-  //d.append(3,'!');
-  strncat(buf,d.c_str(), sizeof(a));
-  outputv5 << th->wnd;
-  e = outputv5.str();
-  //e.append(3,'!');
-  strncat(buf,e.c_str(), sizeof(a));
-};
-*/
+
 
 //----------------------- MAIN CLASS -------------------
 
@@ -48,7 +20,8 @@ class toumain {
  	
 	public :
 	unsigned long test;
-	touheader t;
+	toupkg tp;
+	//touheader t;
 	int tou_close();
 	struct sockaddr_in socket1;
 	struct sockaddr_in socket2;
@@ -58,19 +31,19 @@ class toumain {
 	char buf1[50];
 	timerMng timermng;
 	
-	void converttobyteorder(touheader t) {
-	t.seq = htonl(t.seq);
-    t.mag = htonl(t.seq);
-    t.ack_seq = htonl(t.seq);
-    t.syn = htons(t.syn);
-    t.ack = htons(t.ack);
-    t.ack_seq = htons(t.ack_seq);
+	void converttobyteorder(toupkg tp) {
+	tp.t.seq = htonl(tp.t.seq);
+    tp.t.mag = htonl(tp.t.seq);
+    tp.t.ack_seq = htonl(tp.t.seq);
+    tp.t.syn = htons(tp.t.syn);
+    tp.t.ack = htons(tp.t.ack);
+    tp.t.ack_seq = htons(tp.t.ack_seq);
     }
 	
-	void convertfrombyteorder(touheader t) {
-	t.seq = ntohl(t.seq);
-    t.mag = ntohl(t.seq);
-    t.ack_seq = ntohl(t.seq);
+	void convertfrombyteorder(toupkg tp) {
+	tp.t.seq = ntohl(tp.t.seq);
+    tp.t.mag = ntohl(tp.t.seq);
+    tp.t.ack_seq = ntohl(tp.t.seq);
     }
     
 	int tou_socket() {
@@ -92,26 +65,27 @@ class toumain {
 		
 		//send syn and seq no
 		
-		t.seq = rand()%(u_long)65535;
-		t.mag = (u_long)9999;
-		converttobyteorder(t);
-		t.syn = 1;
-		rv = sendto(sd, &t, sizeof(t), 0, (struct sockaddr*)&socket2, 	sizeof(struct sockaddr_in));
+		tp.t.seq = rand()%(u_long)65535;
+		tp.t.mag = (u_long)9999;
+		converttobyteorder(tp);
+		tp.t.syn = 1;
+		rv = sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr*)&socket2, 	sizeof(struct sockaddr_in));
 		size_t len = sizeof(sockaddr);
+		cout << endl << " INSIDE TOU_CONNECT () " <<endl;
 		
 		//Check if the ayn ack has received
 		while(1)
 		{
  			fd_set socks;
- 			struct timeval t;
+ 			struct timeval tim;
  			FD_ZERO(&socks);
  			FD_SET(sd, &socks);
- 			t.tv_sec = 4;
+ 			tim.tv_sec = 4;
  			
- 			if (select(sd+1, &socks, NULL, NULL, &t))
+ 			if (select(sd+1, &socks, NULL, NULL, &tim))
 			{
  				//recvfrom(sock, data, length, 0, sockfrom, &length);
- 				rv = recvfrom(sd, &t, sizeof t, 0, (struct sockaddr *)&socket2,	 &len);
+ 				rv = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr *)&socket2,	 &len);
  				cout<<"SYN ACK received : "<< endl;
  				break;
 			}
@@ -127,19 +101,20 @@ class toumain {
 			cout << "SYN ACK not received : " << endl;
 			sleep(4);	
 		}*/
-		convertfrombyteorder(t);
+		convertfrombyteorder(tp);
 		perror("talker: sendto");
-		cout << "seq no received from server : " << t.seq<<endl;
-		cout << "mag no " << t.mag<<endl;
-		cout << "ack no received from server : " << t.ack_seq<<endl;
-		t.ack_seq = t.seq + 1;
-		t.syn = 0;
-		t.ack = 1;
-		converttobyteorder(t);
+		cout << "seq no received from server : " << tp.t.seq<<endl;
+		//cout << "mag no " << tp.t.mag<<endl;
+		cout << "ack no received from server : " << tp.t.ack_seq<<endl;
+		tp.t.ack_seq = tp.t.seq + 1;
+		tp.t.syn = 0;
+		tp.t.ack = 1;
+		converttobyteorder(tp);
 		
 		//send final 3way handshake
 		
-		rv = sendto(sd, &t, sizeof(t), 0, (struct sockaddr*)&socket2, sizeof(struct sockaddr_in));
+		rv = sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr*)&socket2, sizeof(struct sockaddr_in));
+		cout << " Sent the third handshake " << endl;
 		return true;
 	}
 
@@ -150,32 +125,35 @@ class toumain {
 	int tou_send(char *buf123,int len1) {
 		ssize_t no;	
 		char buf12[10];	
-		//char buf[len1+1];
+		char buf[len1+1];
 		size_t len = sizeof(sockaddr);
-		memset(t.buf, 0, TOU_MSS);
-		strncpy(t.buf, buf123, len1);
-		//cout << "before :" << t.seq << endl;
+		memset(tp.buf, 0, TOU_MSS);
+		strncpy(tp.buf, buf123, len1);
+		cout << endl << " INSIDE TOU_SEND () " <<endl;
+		int act = (sizeof tp.t) + (strlen(tp.buf));
+		//cout << "before :" << tp.t.seq << endl;
 		//no = sendto(sd, buf, strlen(buf),0,(struct sockaddr*)&socket2, sizeof(struct sockaddr_in));
-		t.seq = t.seq + no;
-		cout << " Sequence no of data sent  : " << t.seq << endl;
-		converttobyteorder(t);
-		no = sendto(sd, &t, sizeof(t),0,(struct sockaddr*)&socket2, sizeof(struct sockaddr_in));
+		tp.t.seq = tp.t.seq + no;
+		cout << " Sequence no of data sent  : " << tp.t.seq << endl;
 		
-		cout << " Data Sent : " << t.buf << endl;
+		converttobyteorder(tp);
+		no = sendto(sd, &tp, act,0,(struct sockaddr*)&socket2, sizeof(struct sockaddr_in));
+		
+		cout << " Data Sent : " << tp.buf << endl;
 		memset(buf12,0,sizeof buf12);
 		sprintf(buf12,"%d",no);
 		sendto(sd, buf12, sizeof(buf12),0,(struct sockaddr*)&socket2, sizeof(struct sockaddr_in));
-		//t.seq = t.seq + no;
-		//cout << "sequence no after : " << t.seq << endl;
-		convertfrombyteorder(t);
+		//tp.t.seq = tp.t.seq + no;
+		//cout << "sequence no after : " << tp.t.seq << endl;
+		convertfrombyteorder(tp);
 		int rec = -1;
-		rec = recvfrom(sd, &t, sizeof t, 0, (struct sockaddr *)&socket2,&len);
+		rec = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr *)&socket2,&len);
 		if(rec == -1) {
 			timermng.add(1,3333,4000,101);
 			cout << "Timer started " << endl;
 		}
 		else
-		cout <<" received ack is : " << t.ack_seq << endl;
+		cout <<" received ack is : " << tp.t.ack_seq << endl;
 		
 		return true;
 	}
@@ -211,7 +189,7 @@ int main(int argc, char* argv[])
 	tm.socket1.sin_port = htons(1501);
 	sd = tm.tou_bind();
 	unsigned long len;
-	len = sizeof tm.t;
+	len = sizeof tm.tp.t;
 	//cout<< "Length of header  : " << len <<endl;
 	sd = tm.tou_connect();
 	cout << " hi" <<endl; 
@@ -225,8 +203,9 @@ int main(int argc, char* argv[])
            tm.tou_send(send_data,strlen(send_data)); 
 	else
     {
-       close(sockd);
-       break;
+		tm.tou_send(send_data,strlen(send_data));
+        close(sockd);
+        break;
    	}
 
 	//i++;
