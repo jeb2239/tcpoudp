@@ -1,5 +1,23 @@
+/***************************************************
+
+
+				TOU HEADER
+				
+
+***************************************************/
+
+
+
 #include <stdint.h>
 #include <iostream>
+#include <boost/asio.hpp>
+#include <boost/thread.hpp>
+#include <boost/bimap.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/bind.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/timer.hpp>
+#include <boost/system/system_error.hpp>
 
 /******************************************************
  * Type define here
@@ -16,6 +34,10 @@ typedef unsigned char	u_char;
 #define TOUT_KEEP		2
 #define TOUT_2MSL		3
 
+//<<<<<<< .mine
+#define TOU_MSS			1400 
+//=======
+//>>>>>>> .r12
 //States
 #define TOUS_CLOSED			0
 #define TOUS_LISTEN			1
@@ -32,7 +54,7 @@ typedef unsigned char	u_char;
 /******************************************************
  * ToU header
  * ***************************************************/
-class touheader {
+class touHeader {
   public:
     u_long		seq;
     u_long		mag;
@@ -50,21 +72,23 @@ class touheader {
 
 	u_short window;
 	u_short check;
+	
+	
 };
 
 /******************************************************
  * ToU application layer: ToU hdr + Data
  * ***************************************************/
-class toupkg {
+class touPkg {
   public:
-    touheader		*touhdr;
-//    char			*payload;
+    touHeader		t;
+    char 			buf[TOU_MSS];
 };
 
 /******************************************************
  * ToU control block
  * ***************************************************/
-class toucb {
+class touCb {
   public:
     short		t_state;		//11 connection states
     short		t_timer[TOUT_TIMERS];	//4 timers
@@ -94,15 +118,16 @@ class toucb {
 /******************************************************
  * socket table
  * ***************************************************/
-class socktb {
+class sockTb {
   public:
-    toucb		*tc;			//tcp control block
+    touCb		*tc;			//tcp control block
 
     int			sockd;			//socket file descriptor
     u_short 		sport;
     u_short 		dport;
     string  		sip;
     string  		dip;
+    
 
 };
 
@@ -112,7 +137,7 @@ class socktb {
 class tou {
   public :
     unsigned long 	test;
-    touheader 		t;
+    touHeader 		t;
     int tou_socket(void);
     int tou_accept();
     int tou_bind();
