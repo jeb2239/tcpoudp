@@ -33,10 +33,10 @@ class touMain {
 	int tou_close(); 
 	
 	// Define structures
-	struct sockaddr_in socket1;
+	/*struct sockaddr_in socket1;
 	struct sockaddr_in socket2;
 	struct sockaddr_in socket3;
-	
+	*/
 	// Socket Descriptors
 	int sd;
 	int sd2;
@@ -65,19 +65,26 @@ class touMain {
     
     // ------------------------------CREATE ----------------------------------
     
-	int touSocket() {
-	sd = socket(AF_INET,SOCK_DGRAM,0);
-	setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
-	return sd;
+	int touSocket(int domain, int type, int protocol) {
+	
+		if ((domain != AF_INET) || (type != SOCK_DGRAM) || (protocol != 0 ))
+		{
+			cout << "ERROR CREATING SOCKET" ;
+			return -1 ;
+		}
+		sd = socket(domain,type,0);
+		setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+		return sd;
 	
 	}
 	
 	//----------------------------BIND ---------------------------------------
 	
-	int touBind() {
-	int rv;
-	rv = bind(sd,(struct sockaddr*) &socket1,sizeof socket1);
-	return rv;
+	int touBind(int sockfd, struct sockaddr *my_addr, int addrlen) {
+	
+		int rv;
+		rv = bind(sockfd,my_addr,addrlen);
+		return rv;
 	}
 	
 	//-----------------------------LISTEN -----------------------------------
@@ -91,7 +98,7 @@ class touMain {
 	
 	//---------------------------ACCEPT --------------------- 
 	
-	int touAccept() {
+	int touAccept(int sd, struct sockaddr *socket2, socklen_t *addrlen) {
 		int rv, control=0, flagforsyn = 1;
 		size_t len = sizeof(sockaddr);
 		convertToByteOrder(tp);
@@ -99,7 +106,7 @@ class touMain {
 		
 		// receive first handshake
 		
-		rv = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr *)&socket2, &len);
+		rv = recvfrom(sd, &tp, sizeof tp, 0,socket2, &len);
 		cout << "seq no received from client : " << tp.t.seq<<endl;
 		
 		//send syn ack
@@ -112,15 +119,15 @@ class touMain {
 		convertToByteOrder(tp);
 		
 		//Code for testing begin
-		/*	sleep(3);
+		//	sleep(3);
 		
-				rv = sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr*)&socket2, sizeof(struct sockaddr_in));
-		*/
+				rv = sendto(sd, &tp, sizeof(tp), 0, socket2, sizeof(struct sockaddr_in));
+		
 		//Code for testing end
 		
 		//recv third handshake
 		
-		rv = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr *)&socket2, &len);
+		rv = recvfrom(sd, &tp, sizeof tp, 0, socket2, &len);
 		convertFromByteOrder(tp);
 		cout << "ack no received for the third handshake : " << tp.t.ack_seq<<endl;
 		cout << endl << " LEAVING TOUACCEPT () " <<endl;
@@ -131,7 +138,7 @@ class touMain {
 	
 	
 	//-----------------	RECEIVE  --------------------------
-	
+	/*
 	int touRecv() {
 	
 	memset(tp.buf,0,50);
@@ -162,7 +169,8 @@ class touMain {
 			cout << " Ack sent " <<endl; 
 		}
 		return no1;
-	}	
+	}
+	*/	
 };
 	
 int main()
@@ -173,28 +181,35 @@ int main()
 	int sd,bytes_recieved;
 	int sockd;
 	tm.yes = 1;
+	struct sockaddr_in socket1;
+	struct sockaddr_in socket2;
+	struct sockaddr_in socket3;
 	
 	//CREATE 
-	sockd = tm.touSocket();
-	
+	sockd = tm.touSocket(AF_INET,SOCK_DGRAM,0);
+	cout << " Socket function returned : " << sockd << endl;
 	//Set socket structures
-	memset(&tm.socket1,0,sizeof(tm.socket1));
-	tm.socket1.sin_family = AF_INET;
-	tm.socket1.sin_addr.s_addr=htonl(INADDR_ANY);
-	tm.socket1.sin_port = htons(1500);
-	memset(&tm.socket2,0,sizeof(tm.socket2));
-	tm.socket2.sin_family = AF_INET;
-	tm.socket2.sin_addr.s_addr=htonl(INADDR_ANY);
+	memset(&socket1,0,sizeof(socket1));
+	socket1.sin_family = AF_INET;
+	socket1.sin_addr.s_addr=htonl(INADDR_ANY);
+	socket1.sin_port = htons(1500);
+	memset(&socket2,0,sizeof(socket2));
+	socket2.sin_family = AF_INET;
+	socket2.sin_addr.s_addr=htonl(INADDR_ANY);
 	
 	//BIND
-	sd = tm.touBind();
+	sd = tm.touBind(sockd,(struct sockaddr*) &socket1,sizeof socket1);
+	cout << " Bind Returns : "<< sd << endl;
+	
 	unsigned long len;
 	
 	while(1) {
-		sd = tm.touAccept();
+		socklen_t sinlen = sizeof(socket2);
+		sd = tm.touAccept(sockd,(struct sockaddr*)&socket2,&sinlen);
 		if (sd == 1) {
-		
-		
+				cout << "SUCCESS !! " << endl;
+				}
+	/*	
 	//SOCKET TABLE INFO 
 			boost::mutex::scoped_lock lock(soctabmutex);
 			s.sockd = sockd;
@@ -204,10 +219,10 @@ int main()
 			s.sip = inet_ntoa(tm.socket1.sin_addr);
 			
 				
-			cout <<"socket table info : "<<endl
-			cout <<"Sockfd : " << s.sockd<< endl
-			cout <<"-------------------"<<endl
-			cout <<"ports : "<< ntohs(s.dport) <<" " << ntohs(s.sport) <<endl
+			cout <<"socket table info : "<<endl;
+			cout <<"Sockfd : " << s.sockd<< endl;
+			cout <<"-------------------"<<endl;
+			cout <<"ports : "<< ntohs(s.dport) <<" " << ntohs(s.sport) <<endl;
 			cout <<" ip : "<< s.sip <<" "<<s.dip << endl ;
 			}
 			while(1) 
@@ -217,7 +232,8 @@ int main()
 			  fflush(stdout);
 
 			}
-	
+	*/
 	}
+	
 	return 0;
 }
