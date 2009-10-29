@@ -82,6 +82,7 @@ class touHeader {
 class touPkg {
   public:
     touHeader		t;
+    //touHeader		t2;
     char 			buf[TOU_MSS];
 };
 
