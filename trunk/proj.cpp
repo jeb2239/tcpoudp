@@ -1,6 +1,8 @@
 #include "timer.h"
 
 int main(){
+
+/* test code for timer 
   timerMng timermng;
   for(int i=1,j=1;i<=15000; i++,j++)
   {
@@ -13,6 +15,10 @@ int main(){
   timermng.delete_timer(2, 5, 6);
 
   while(1);
+  
+*/
+
+
   return 0;
 }
 
