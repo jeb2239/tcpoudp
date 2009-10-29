@@ -36,10 +36,10 @@ class touMain {
 	unsigned long test;
 	touPkg tp;
 	int tou_close();	//TODO : Remove when implemented 
-	struct sockaddr_in socket1;
+	/*struct sockaddr_in socket1;
 	struct sockaddr_in socket2;
 	struct sockaddr_in socket3;
-	
+	*/
 	// Socket File Descriptors
 	
 	int sd;
@@ -69,23 +69,31 @@ class touMain {
     
     //------------------------------- CREATE SOCKET ------------------------------
     
-	int touSocket() {
-	sd = socket(AF_INET,SOCK_DGRAM,0);
-	return sd;
+	int touSocket(int domain, int type, int protocol) {
+	
+		if ((domain != AF_INET) || (type != SOCK_DGRAM) || (protocol != 0 ))
+		{
+			cout << "ERROR CREATING SOCKET" ;
+			return -1 ;
+		}
+		sd = socket(domain,type,0);
+		//setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+		return sd;
 	}
 	
 	//------------------------------ BIND SOCKET ------------------------------------
 	
-	int touBind() {
+	int touBind(int sockfd, struct sockaddr *my_addr, int addrlen) {
+	
 		int rv;
-		rv = bind(sd,(struct sockaddr*) &socket1,sizeof socket1);
+		rv = bind(sockfd,my_addr,addrlen);
 		return rv;
 	}
 	
 	
 	//	---------------------------- CONNECT -----------------------------------------
 	
-	int touConnect() {
+	int touConnect(int sd, struct sockaddr *socket2, int addrlen) {
 		int rv;
 		
 		//send syn and seq no
@@ -95,9 +103,9 @@ class touMain {
 		tp.t.mag = (u_long)9999;
 		convertToByteOrder(tp);
 		tp.t.syn = 1;
-		rv = sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr*)&socket2, 	sizeof(struct sockaddr_in));
+		rv = sendto(sd, &tp, sizeof(tp), 0,socket2,addrlen);
 		size_t len = sizeof(sockaddr);
-		cout << endl << " INSIDE TOU_CONNECT () " <<endl;
+		cout << endl << " INSIDE TOU CONNECT () " <<endl;
 		
 		//Check if the ayn ack has received
 		
@@ -112,7 +120,7 @@ class touMain {
  			if (select(sd+1, &socks, NULL, NULL, &tim))
 			{
  				//recvfrom(sock, data, length, 0, sockfrom, &length);
- 				rv = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr *)&socket2,	 &len);
+ 				rv = recvfrom(sd, &tp, sizeof tp, 0, socket2,&len);
  				cout<<"SYN ACK received : "<< endl;
  				break;
 			}
@@ -134,7 +142,7 @@ class touMain {
 		
 		//send final 3way handshake
 		
-		rv = sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr*)&socket2, sizeof(struct sockaddr_in));
+		rv = sendto(sd, &tp, sizeof(tp), 0, socket2, addrlen);
 		cout << " Sent the third handshake " << endl;
 		return true;
 	}
@@ -142,7 +150,7 @@ class touMain {
 
 	//--------------------------   SEND ----------------------------
 
-	
+	/*
 	int touSend(char *buf123,int len1) {
 		
 		ssize_t no;
@@ -151,10 +159,10 @@ class touMain {
 		char buf[len1+1];
 		size_t len = sizeof(sockaddr);
 		memset(tp.buf, 0, TOU_MSS);
-		strncpy(tp.buf, buf123, len1);
+		memcpy(tp.buf, buf123, len1);
 		cout << endl << " INSIDE TOUSEND () " <<endl;
-		int act = (sizeof tp.t) + (strlen(tp.buf));
-		int act2 = strlen(tp.buf);
+		int act = (sizeof tp.t) + len1;
+		int act2 = len1;
 		
 		//Send data and header
 		
@@ -173,6 +181,18 @@ class touMain {
 		
 		return no;
 	}
+	
+	*/
+	//-------------------------CLOSE------------------------------
+	//TODO
+	
+	int touClose()
+	{
+		
+		tp.t.fin = 1;
+		tp.t.seq = tp.t.seq + 1;
+		tp.t.ack_seq = 1;
+	}
 };
 	
 	
@@ -186,6 +206,9 @@ int main(int argc, char* argv[])
 	char msg[50];
 	char send_data[1024],recv_data[1024];
 	memset(msg,0,50);
+	struct sockaddr_in socket1;
+	struct sockaddr_in socket2;
+	struct sockaddr_in socket3;
 	
 	// Message to be sent
 	strcpy(msg,argv[2]);
@@ -203,32 +226,31 @@ int main(int argc, char* argv[])
     
     //Set socket 2
     
-    memset(&tm.socket2, 0, sizeof(tm.socket2));
-   	tm.socket2.sin_family = h->h_addrtype;
-   	memcpy((char *) &tm.socket2.sin_addr.s_addr,
+    memset(&socket2, 0, sizeof(socket2));
+   	socket2.sin_family = h->h_addrtype;
+   	memcpy((char *) &socket2.sin_addr.s_addr,
     h->h_addr_list[0], h->h_length);
-    tm.socket2.sin_port = htons(1500);
+    socket2.sin_port = htons(1500);
 	
 	//CREATE socket
-	//TODO : socket structure should be defined in the main function  
-	sockd = tm.touSocket();
+	 
+	sockd = tm.touSocket(AF_INET,SOCK_DGRAM,0);
 	
 	//Set socket 1
-	memset(&tm.socket1,0,sizeof(tm.socket1));
-	tm.socket1.sin_family = AF_INET;
-	tm.socket1.sin_addr.s_addr=htonl(INADDR_ANY);
-	tm.socket1.sin_port = htons(1501);
+	memset(&socket1,0,sizeof(socket1));
+	socket1.sin_family = AF_INET;
+	socket1.sin_addr.s_addr=htonl(INADDR_ANY);
+	socket1.sin_port = htons(1501);
 	
 	//BIND
-	sd = tm.touBind();
+	sd = tm.touBind(sockd,(struct sockaddr*) &socket1,sizeof socket1);
 	unsigned long len;
 	len = sizeof tm.tp.t;
 	
 	//CONNECT
-	sd = tm.touConnect();
-	cout << " hi" <<endl; 
-	
-	
+	sd = tm.touConnect(sockd,(struct sockaddr*)&socket2,sizeof(socket2));
+	cout << "Connect returns : "<< sd << endl;
+	/*
 	while(1){
 	cout<< "Enter data to be sent : " << endl;
 	gets(send_data);
@@ -241,6 +263,6 @@ int main(int argc, char* argv[])
    	     	break;
    		}
 
-	}
+	}*/
 	return 0;
 }
