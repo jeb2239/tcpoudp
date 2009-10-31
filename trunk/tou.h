@@ -64,6 +64,9 @@ typedef unsigned char	u_char;
 #define TOUS_FIN_WAIT_2		9
 #define TOUS_TIME_WAIT		10
 
+
+//TRACE(level, params, etc);
+
 /******************************************************
  * ToU control block
  * ***************************************************/
@@ -105,6 +108,10 @@ class sockTb {
     u_short 		dport;
     string  		sip;
     string  		dip;
+	
+	//circular buf send 
+	//circular buf recv
+	//mutex
 };
 
 /******************************************************
