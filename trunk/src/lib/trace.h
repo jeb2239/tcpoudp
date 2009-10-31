@@ -9,7 +9,7 @@
 #define _TRACE_H
 
 #include <stdio.h>
-#include "types.h"
+//#include "types.h"
 
 #include <string>
 using namespace std;
@@ -21,13 +21,10 @@ extern int idlen;
 
 //TRACE(5,"KadPeer::OnTimer...transaction map: %d LObject map: %d\n", m_TMap.size(), m_LO.size() );
 
-
-
-#ifdef _LINUX_
+//#ifdef _LINUX_
 
 #include <stdarg.h>
 
-/*
 inline void TRACE(int level, char* format, ...) {
 
   va_list ap;
@@ -92,17 +89,16 @@ inline void TRACE(int level, char* format, ...) {
   }
   va_end(ap);
 }
-*/
 
 
 
 
-#define TRACE(level, format, args ...) /*{ \
+#define TRACE(level, format, args ...) { \
   if(level <= 5) { \
     fprintf(_fptrace, format, args ); \
     fflush(_fptrace); \
   } \
-}*/
+}
 
 
 /*
@@ -111,7 +107,7 @@ inline void TRACE(int level, char* format, ...) {
 
 */
 
-#endif
+//#endif
 
 #ifdef WIN32
 
