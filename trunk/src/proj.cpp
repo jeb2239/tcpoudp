@@ -1,8 +1,14 @@
 #include "timer.h"
+#include "trace.h"
 
 int main(){
+  FILE* _fptrace;
+  _fptrace = fopen("debug.txt", "w");
+  fprintf(_fptrace, "abc%d\n", 1);
 
   printf("Hello\n");
+  TRACE(5,"TRACE test: %d LObject map: %d\n", 1, 2 );
+
 /* test code for timer 
   timerMng timermng;
   for(int i=1,j=1;i<=15000; i++,j++)
