@@ -1256,7 +1256,8 @@ tou.o tou.o: tou.cpp tou.h /usr/include/stdio.h /usr/include/features.h \
   ../../boostlib/boost_1_40_0/boost/date_time/posix_time/time_period.hpp \
   ../../boostlib/boost_1_40_0/boost/date_time/posix_time/posix_time_duration.hpp \
   ../../boostlib/boost_1_40_0/boost/date_time/posix_time/time_parsers.hpp \
-  ../../boostlib/boost_1_40_0/boost/timer.hpp touheader.h
+  ../../boostlib/boost_1_40_0/boost/timer.hpp circularbuffer.h \
+  touheader.h
 
 tou.h:
 
@@ -3951,5 +3952,7 @@ timer.h:
 ../../boostlib/boost_1_40_0/boost/date_time/posix_time/time_parsers.hpp:
 
 ../../boostlib/boost_1_40_0/boost/timer.hpp:
+
+circularbuffer.h:
 
 touheader.h:

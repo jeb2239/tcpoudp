@@ -27,7 +27,8 @@
 /***************************************************
  * Include from self-define header
  **************************************************/
-#include "timer.h"						//timer library
+#include "timer.h"					//timer library
+#include "circularbuffer.h"
 #include "touheader.h"					//touheader
 //#include "toucong.h"					//congestion
 
@@ -63,6 +64,9 @@ typedef unsigned char	u_char;
 #define TOUS_LAST_ACK		8
 #define TOUS_FIN_WAIT_2		9
 #define TOUS_TIME_WAIT		10
+
+
+//TRACE(level, params, etc);
 
 /******************************************************
  * ToU control block
@@ -105,6 +109,11 @@ class sockTb {
     u_short 		dport;
     char  		*sip;
     char  		*dip;
+	
+    CircularBuffer 	scb;			//sender circular buf
+    CircularBuffer	dcb;			//receiver circular buf
+
+    //mutex
 };
 
 /******************************************************

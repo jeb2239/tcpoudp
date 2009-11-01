@@ -4,7 +4,7 @@
 
 CircularBuffer::CircularBuffer() {
   m_uiHi=0;       //Head index
-  m_uiTi=0;       //Head index
+  m_uiTi=0;       //Tail index
 
   m_uiSize=dsize; //size of the queue
 
@@ -77,7 +77,7 @@ int CircularBuffer::insert(char* buf, int n, int& start, int& end) {
 
   //(1) first insert at the end of the queue
   //empty space from current position to the end of the queue
-  unsigned int first = m_uiSize-m_uiTi;
+  unsigned int first = m_uiSize-m_uiTi; // first would be how mcuh left of queue
   unsigned int second = 0;
   start = m_uiTi;
   
@@ -92,7 +92,7 @@ int CircularBuffer::insert(char* buf, int n, int& start, int& end) {
   
   //(2) if still remaining, insert at the beginning of the queue
   if(second > 0) {
-    memcpy(m_buf+m_uiTi, buf, second);
+    memcpy(m_buf+m_uiTi, buf+first, second);
     m_uiTi=second;
   }//end if
 
@@ -148,7 +148,7 @@ int CircularBuffer::getAt(char* buf, int start, int n, int& end) {
  
 
   unsigned int first, second;
-  first=m_uiSize-start;  //head of the queue
+  first=m_uiSize-start;  //head of the queue (sizeofQ - start)
   second=0;
   
   //there is a wrap around
@@ -265,10 +265,10 @@ int CircularBuffer::getTotalElements() {
 void CircularBuffer::print() {
   
   unsigned int ind=m_uiHi;
-  int size=m_uiTotEl;
+  int size=m_uiTotEl; //total # of elements in the queue
 
   while(size > 0) {
-    printf("%c ind: %d\n", m_buf[ind], ind);
+    printf("%c index: %d\n", m_buf[ind], ind);
     ind=(ind+1)%m_uiSize;
     size--;
   }
