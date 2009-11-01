@@ -1,7 +1,6 @@
 #include "tou.h"
 
 using namespace std;
-boost::mutex soctabmutex;
 class touMain {
  	
 	public :
@@ -78,7 +77,7 @@ class touMain {
 	
 	//	---------------------------- CONNECT -----------------------------------------
 	
-	int touConnect(int sd, struct sockaddr *socket2, int addrlen) {
+	int touConnect(int sd, struct sockaddr_in *socket1, int addrlen) {
 		int rv;
 		
 		//send syn and seq no
@@ -88,7 +87,10 @@ class touMain {
 		tp.t.mag = (u_long)9999;
 		convertToByteOrder(tp);
 		tp.t.syn = 1;
-		rv = sendto(sd, &tp, sizeof(tp), 0,socket2,addrlen);
+		cout <<"Address" << inet_ntoa(socket1->sin_addr) <<endl;
+		rv = sendto(sd, &tp, sizeof(tp), 0,(struct sockaddr*)socket1,sizeof(struct sockaddr_in));
+perror("send : ");
+		cout << " rv : "<< rv <<endl;
 		size_t len = sizeof(sockaddr);
 		cout << endl << " INSIDE TOU CONNECT () " <<endl;
 		
@@ -105,7 +107,7 @@ class touMain {
  			if (select(sd+1, &socks, NULL, NULL, &tim))
 			{
  				//recvfrom(sock, data, length, 0, sockfrom, &length);
- 				rv = recvfrom(sd, &tp, sizeof tp, 0, socket2,&len);
+ 				rv = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr*)socket1,&len);
  				cout<<"SYN ACK received : "<< endl;
  				break;
 			}
@@ -127,10 +129,16 @@ class touMain {
 		
 		//send final 3way handshake
 		
-		rv = sendto(sd, &tp, sizeof(tp), 0, socket2, addrlen);
+		rv = sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr*)socket1, addrlen);
 		cout << " Sent the third handshake " << endl;
+		cout<<" sport : in connect : "<< ntohs(socket1->sin_port)<<endl;
+	cout <<"Address" << inet_ntoa(socket1->sin_addr) <<endl;
+		sockMng sm;
+		sm.setSocketTable(socket1, sd);
+
 		return true;
 	}
+
 
 
 	//--------------------------   SEND ----------------------------
@@ -165,18 +173,23 @@ class touMain {
 		
 		return no;
 	}
+	*/
 	
 	//---------------------------ACCEPT --------------------- 
 	
-	int touAccept(int sd, struct sockaddr *socket2, socklen_t *addrlen) {
+	int touAccept(int sd, struct sockaddr_in *socket2, socklen_t *addrlen) {
 		int rv, control=0, flagforsyn = 1;
 		size_t len = sizeof(sockaddr);
 		convertToByteOrder(tp);
 		cout << endl << " INSIDE TOUACCEPT () " <<endl;
-		
+		//memcpy(socket2,sockaddrs,sizeof(socket2));
+		//cout<<"memcpy done "<<endl;
+		//cout <<"Copied address : " << inet_ntoa(sockaddrs->sin_addr)<<endl;
+
+		//sockTb s2;
 		// receive first handshake
 		
-		rv = recvfrom(sd, &tp, sizeof tp, 0,socket2, &len);
+		rv = recvfrom(sd, &tp, sizeof tp, 0,(struct sockaddr *)&socket2, &len);
 		cout << "seq no received from client : " << tp.t.seq<<endl;
 		
 		//send syn ack
@@ -191,22 +204,29 @@ class touMain {
 		//Code for testing begin
 		//	sleep(3);
 		
-				rv = sendto(sd, &tp, sizeof(tp), 0, socket2, sizeof(struct sockaddr_in));
+				rv = sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr *)&socket2, sizeof(struct sockaddr_in));
 		
 		//Code for testing end
 		
 		//recv third handshake
 		
-		rv = recvfrom(sd, &tp, sizeof tp, 0, socket2, &len);
+		rv = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr *)&socket2, &len);
 		convertFromByteOrder(tp);
 		cout << "ack no received for the third handshake : " << tp.t.ack_seq<<endl;
 		cout << endl << " LEAVING TOUACCEPT () " <<endl;
 		
 		if (tp.t.ack_seq == tp.t.seq + 1) cout<<"SUCCESS !!!" << endl;
-		return true;
-	}
+
+		
+
+		sockMng sm;
+		sm.setSocketTable((struct sockaddr_in *)&socket2, sd);
+		
+
+		return true;	
+}
 	
-	
+	/*
 	//-----------------	RECEIVE  --------------------------
 	int touRecv() {
 	

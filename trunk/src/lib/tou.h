@@ -50,6 +50,7 @@ typedef unsigned char	u_char;
 #include <arpa/inet.h>
 #include <iostream>
 #include <sstream>
+#include<vector>
 /***************************************************
  * Include from BOOST library
  **************************************************/
@@ -66,6 +67,7 @@ typedef unsigned char	u_char;
 #include "toucong.h"					//congestion
 
 
+
 /******************************************************
  * socket table
  * ***************************************************/
@@ -75,13 +77,59 @@ class sockTb {
     int			sockd;			//socket file descriptor
     u_short 		sport;
     u_short 		dport;
-    char  		*sip;
-    char  		*dip;
+    std::string  	sip;
+    std::string	  	dip;
+    int 		cid;
+    sockTb()
+	{
+		cid++;
+	}
 	
-    CircularBuffer 	scb;			//sender circular buf
-    CircularBuffer	dcb;			//receiver circular buf
+	//circular buf send 
+	//circular buf recv
+	//mutex
+  void setcid(int a){
+        cid = a;   
+  }
+  void printall()
+  {
+	cout<<"sockd : "<<sockd<<" sport :"<<sport<<" dport :"<<dport <<endl;
+	cout<<" sip : "<<sip<<" dip : "<<dip<<" cid : "<< cid <<endl;
+  }
 
-    //mutex
+};
+vector<sockTb*> SS;
+int cid_ =0;
+class sockMng {
+        
+	
+	public :
+	sockTb *s;
+	
+  	void setSocketTable(sockaddr_in *sockettemp, int sd) {
+		s = new sockTb;
+		cout <<"Address : in  table " << inet_ntoa(sockettemp->sin_addr) <<endl;
+		//cout<<"\tport:-> "<<ntohs(socket2->sin_port)<<endl;
+		boost::mutex::scoped_lock lock(soctabmutex);
+		s->sockd = sd;
+		s->dport = 1500;
+		s->sport = ntohs(sockettemp->sin_port);
+		s->sip = inet_ntoa(sockettemp->sin_addr);
+                s->setcid(cid_++);
+		SS.push_back(s);
+
+		for(int i = 0;i < SS.size();i++)
+		{
+				
+			cout << "printing vector"<<endl ;
+			cout << i << " : ";
+			SS.at(i)->printall();
+		}
+	
+	  }
+	
+	//void getSocketTable()
+	
 };
 
 /******************************************************
