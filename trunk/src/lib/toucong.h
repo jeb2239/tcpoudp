@@ -1,7 +1,6 @@
 /*************************************************************
  * Congestion control header 
  * **********************************************************/
-#include "touheader.h"
 
 //segment size definition
 #define TOU_SMSS                1464
@@ -13,7 +12,7 @@ class ssca {
     ssca();
     /* init cwnd to one segment
      * init ssthresh to default */
-    ssca(toucb *ptb);
+    ssca(touCb *ptb);
     ~ssca();
 
     /* while xmitting successfully */
@@ -27,6 +26,6 @@ class ssca {
     void setdwnd();
 
   private:
-    toucb		*tb;
+    touCb		*tb;
 
 };
