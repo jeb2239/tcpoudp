@@ -67,31 +67,15 @@ typedef unsigned char	u_char;
 #include "toucong.h"					//congestion
 
 
-vector<sockTb*> SS;
+
 boost::mutex soctabmutex;
 
 
-boost::mutex soctabmutex;
+
 
 /******************************************************
  * socket table
  * ***************************************************/
-<<<<<<< .mine
-class sockTb {
-	public:
-	touCb			*tc;			//tcp control block
-	int			sockd;			//socket file descriptor
-	u_short 		sport;
-	u_short 		dport;
-	std::string	  	sip;
-   	std::string	  	dip;
-    	int 			cid;
-	CircularBuffer          CbSendBuf;
-	CircularBuffer          CbRecvBuf;
-	
-	sockTb() {
-		
-		cid++;
 
 class sockTb {
   public:
@@ -99,9 +83,12 @@ class sockTb {
     int			sockd;			//socket file descriptor
     u_short 		sport;
     u_short 		dport;
-    std::string  	sip;
-    std::string	  	dip;
+    char*	 	sip;
+    char*	  	dip;
     int 		cid;
+    CircularBuffer 	CbSendBuf;
+    CircularBuffer 	CbRecvBuf;
+
     sockTb()
 	{
 		cid++;
@@ -122,27 +109,9 @@ class sockTb {
 
 };
 int cid_ =0;
-class sockMng {
-        
-	public :
-	setSocketTable(sockaddr_in *, int ) 
-	sockTb *s;
 
-	//circular buf send 
-	//circular buf recv
-	//mutex
-  void setcid(int a){
-        cid = a;   
-  }
-  void printall()
-  {
-	cout<<"sockd : "<<sockd<<" sport :"<<sport<<" dport :"<<dport <<endl;
-	cout<<" sip : "<<sip<<" dip : "<<dip<<" cid : "<< cid <<endl;
-  }
-
-};
 vector<sockTb*> SS;
-int cid_ =0;
+//int cid_ =0;
 class sockMng {
 	public :
 	sockTb *s;
@@ -178,8 +147,8 @@ class sockMng {
 	        sockTb	*s;
 	 	for(stbiter=SS.begin(); stbiter!=SS.end(); stbiter++)
 	        {
-		  if(stbiter->sockd == sockfd)
-		    return stbiter;
+		  if((*stbiter)->sockd == sockfd)
+		    return (*stbiter);
 	   	}
 		return NULL;
 	 }
@@ -200,21 +169,22 @@ class touMain {
 		
 	unsigned long test;
 	touPkg tp;
-	sockTb s;
+	sockTb s, *s1;
 	int sd;
 	int sd2;
 	int yes;
 	string touhstring;
 	char buf[50],buf1[50],buf3[50],buf4[50],buf5[50];
 	timerMng timermng;
-	ioCongMng iocm;
-	touheaderack thack;
+	sockMng sm;
+	//ioCongMng iocm;
+	//touheaderack thack;
 	
 	public :
 	
 	int touSocket(int , int , int );
 	int touAccept(int , struct sockaddr_in *, socklen_t * );
-	int touConnect(int , struct sockaddr_in *, int )
+	int touConnect(int , struct sockaddr_in *, int );
 	int touBind(int , struct sockaddr *, int );
 	int touListen();
 	int touSend(int , char *, int , int );
@@ -222,6 +192,8 @@ class touMain {
 	int touClose();
 	void convertToByteOrder(touPkg);
 	void convertFromByteOrder(touPkg);
+	int timero(int , int);
+	int assignaddr(struct sockaddr_in *, sa_family_t , char* , u_short);
 	
 };	
 

@@ -2,13 +2,6 @@
 
 using namespace std;
 
-
-
-class touMain {
-
- 	
-	
-	// Byte order conversions
 	
 	
 	void touMain::convertFromByteOrder(touPkg tp) {
@@ -66,6 +59,11 @@ class touMain {
 		int rv;
 		
 
+		
+
+		//send syn and seq no
+		//TODO : change the mod to 2^32 and the magic number also
+		
 		tp.t.seq = rand()%(u_long)65535;
 		tp.t.mag = (u_long)9999;
 		convertToByteOrder(tp);
@@ -113,70 +111,16 @@ class touMain {
 		//send final 3way handshake
 		
 
-		//send syn and seq no
-		//TODO : change the mod to 2^32 and the magic number also
-		
-		tp.t.seq = rand()%(u_long)65535;
-		tp.t.mag = (u_long)9999;
-		convertToByteOrder(tp);
-		tp.t.syn = 1;
-		cout <<"Address" << inet_ntoa(socket1->sin_addr) <<endl;
-		rv = sendto(sd, &tp, sizeof(tp), 0,(struct sockaddr*)socket1,sizeof(struct sockaddr_in));
-perror("send : ");
-		cout << " rv : "<< rv <<endl;
-		size_t len = sizeof(sockaddr);
-		cout << endl << " INSIDE TOU CONNECT () " <<endl;
-		
-		//Check if the ayn ack has received
-		
-		while(1)
-		{
- 			fd_set socks;
- 			struct timeval tim;
- 			FD_ZERO(&socks);
- 			FD_SET(sd, &socks);
- 			tim.tv_sec = 4;
- 			
- 			if (select(sd+1, &socks, NULL, NULL, &tim))
-			{
- 				//recvfrom(sock, data, length, 0, sockfrom, &length);
- 				rv = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr*)socket1,&len);
- 				cout<<"SYN ACK received : "<< endl;
- 				break;
-			}
-			else
- 				cout <<"SYNACK not received !! "<< endl;
-		
-		}
-
-		convertFromByteOrder(tp);
-		perror("talker: sendto");
-		cout << "seq no received from server : " << tp.t.seq<<endl;
-		cout << "ack no received from server : " << tp.t.ack_seq<<endl;
-		
-		
-		tp.t.ack_seq = tp.t.seq + 1;
-		tp.t.syn = 0;
-		tp.t.ack = 1;
-		convertToByteOrder(tp);
-		
-		//send final 3way handshake
-		
-
 		rv = sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr*)socket1, addrlen);
 
 		cout << " Sent the third handshake " << endl;
 		cout<<" sport : in connect : "<< ntohs(socket1->sin_port)<<endl;
 		cout <<"Address" << inet_ntoa(socket1->sin_addr) <<endl;
-		sockMng sm;
+		
 		sm.setSocketTable(socket1, sd);
 
 
-		cout << " Sent the third handshake " << endl;
-		cout<<" sport : in connect : "<< ntohs(socket1->sin_port)<<endl;
-	cout <<"Address" << inet_ntoa(socket1->sin_addr) <<endl;
-		sockMng sm;
-		sm.setSocketTable(socket1, sd);
+		
 
 
 		return true;
@@ -196,12 +140,7 @@ perror("send : ");
 		cout << endl << " INSIDE TOUACCEPT () " <<endl;
 
 
-		size_t len = sizeof(sockaddr);
-		convertToByteOrder(tp);
-		cout << endl << " INSIDE TOUACCEPT () " <<endl;
-		//memcpy(socket2,sockaddrs,sizeof(socket2));
-		//cout<<"memcpy done "<<endl;
-		//cout <<"Copied address : " << inet_ntoa(sockaddrs->sin_addr)<<endl;
+		
 
 		//sockTb s2;
 		// receive first handshake
@@ -237,7 +176,7 @@ perror("send : ");
 
 		
 
-		sockMng sm;
+		
 		sm.setSocketTable((struct sockaddr_in *)&socket2, sd);
 		
 
@@ -263,35 +202,84 @@ perror("send : ");
 		char temp[TOU_MSS];
 		int len3, len2;
 		len3 = len1;
-		touheaderack thack;
+		index = 0;
+		ssca wnd;
+		
+		s1 = sm.getSocketTable(sd);
 		cout << endl << " INSIDE TOUSEND () " <<endl;
 		// check circular buffer size and insert data into it 
 		while(1)
 		{		
-			int checkSize = CbSendBuf.getSize();
+			int checkSize = s.CbSendBuf.getSize();
 			
 			if(len3 <= checkSize)
 			{
-				CbSendBuf.insert(sendBufer,len1);
+				s.CbSendBuf.insert(sendBufer,len3);
 				len2 = len1;
 				break;
 			}
 			else             //What if the circular buffer is full 
 			{
+				int j = 0;
+				for(int i = index; i < (index + checkSize); i++)
+				{
+					temp[j++] = sendBufer[i];
+					len2 = len2 + checkSize;
+				}	
+				index = index + checkSize;
+							
+				s.CbSendBuf.insert(temp,(checkSize));
 				
-				CbSendBuf.insert(temp,(checksize));
-				index = checksize;
-				
-				int j = 0;  //Index for temp buf
 				
 				if( len2 >= len1) break;
 				
 			}
 		}
-		thack = new touheaderack(sd,tp.t);
-		iocm.pushsndq(thack);			
+
+		int seq = tp.t.seq;
+		int numbytes;		
+		struct sockaddr_in* sockaddr;
+		sockTb s;
+		int end;
+		char *buffer;
+		while(1)
+		{
+			u_long w = wnd.getwnd();
+			int n = int(w/int(TOU_MSS));
 			
-		//insert into circular buffer
+			for (int i = 0; i < n; i++)
+			{
+				//memcpy(tp.buf,CbSendBuf,TOU_MSS);
+				buffer = (char *) malloc(TOU_MSS);
+				s.CbSendBuf.getAt(buffer, int(TOU_MSS), end);
+				memcpy(tp.buf,buffer,TOU_MSS);				
+				numbytes = TOU_MSS;
+				int ck = assignaddr(sockaddr, AF_INET, s1->sip, s1->sport); 
+				cout << " Socket built : "<< ck << endl;
+				sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr *)&sockaddr, sizeof(struct sockaddr_in));
+				if(timero(sd,1000000) == 0)
+				{
+					end = end - TOU_MSS;
+					wnd.settwnd();
+					continue;
+				}
+				else
+				{
+					s.CbSendBuf.remove(TOU_MSS);
+					wnd.addwnd();
+					int rv = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr*)&sockaddr, &len);
+					cout << "Data received : " << tp.buf << endl;					
+					convertFromByteOrder(tp);					
+					tp.t.seq = tp.t.seq + rv - sizeof(tp.t);
+					seq = seq + n;
+					if(tp.t.seq + 1 == tp.t.ack)
+					{
+						cout<<"Transfer completed " << endl;
+						break;
+					}
+				}
+			}
+		}
 /*
 		memcpy(tp.buf, sendBuffer, len1);
 		tp.t.seq = tp.t.seq + act2;
@@ -304,53 +292,55 @@ perror("send : ");
 		//TODO : Remove this part
 		//Recv ACK
 		*/	
-		rec = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr *)&socket2,&len);
-		convertFromByteOrder(tp);
-		cout <<" received ack is : " << tp.t.ack_seq << endl;
+		
+//		rec = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr *)&socket2,&len);
+//		convertFromByteOrder(tp);
+//		cout <<" received ack is : " << tp.t.ack_seq << endl;
 		
 		return no;
 	}
 	
 	
 	//-----------------	RECEIVE  --------------------------
-	/*
+	
 	int touMain::touRecv(int sd, char *recvBuffer, int bufferLength, int flags) {
 	
-	memset(tp.buf,0,50);
-	char buf12[10];
-	int no1;
-	memset(buf12,0,10);
-	size_t len = sizeof(sockaddr);
-	sockets.sin_family = AF_INET;
-	sockets.sin_port = htons(s.sport);
-	sockets.sin_addr.s_addr = inet_addr(s.sip);
-	cout << endl << " INSIDE TOURECV () " <<endl;
+		memset(tp.buf,0,50);
+		char buf12[10];
+		int no1, no2 = 0;
+		memset(buf12,0,10);
+		size_t len = sizeof(sockaddr);
+		sockaddr_in* sockaddr;
 		
-		//timermng.add(1,3333,4000,101);
+		cout << endl << " INSIDE TOURECV () " <<endl;
 		
 		//Recv data
+		int ck = assignaddr(sockaddr, AF_INET, s.sip, s.sport); 
+		cout << "Socket created : " << ck << endl;	
+		if(timero(sd,6000000)==0)
+			return no2;
+		else
+		{		
+			no1 = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr *)&sockaddr, &len);
+			no2 = no2 + no1;			
+			cout << " Data Received :  " << tp.buf << endl; 
+			cout << " no of bytes received : " << no1 <<endl;
 		
-		no1 = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr *)&sockets, &len);
-		cout << " Data Received :  " << tp.buf << endl; 
-		cout << " no of bytes received : " << no1 <<endl;
-		
-		convertFromByteOrder(tp);
-		cout << " Sequence no received is :  " << tp.t.seq << endl;
-		
-		//TODO : Put condition to check the data here
-		
-		//Send ACK
-		{
+			convertFromByteOrder(tp);
+			cout << " Sequence no received is :  " << tp.t.seq << endl;
+			
+			//Send ACK
+			
 			tp.t.ack_seq = tp.t.seq + no1 + 1;
 			convertToByteOrder(tp);
-			sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr*)&sockets, sizeof(struct sockaddr_in));
+			sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr*)&sockaddr, sizeof(struct sockaddr_in));
 			cout << " Ack sent " <<endl; 
+			
 		}
-		return no1;
-	}
-*/
 
-}
+	return no2;
+	
+	}
 
 	
 	//-------------------------CLOSE------------------------------
@@ -364,8 +354,35 @@ perror("send : ");
 	}
 
 	
+	/* >0 if fd is okay
+ * ==0 if timeout
+ * <0 if error occur */
+	int touMain::timero(int fd, int usec) {
 	
+		fd_set                timeo_rset;
+		struct timeval        tv;
+	
+		FD_ZERO(&timeo_rset);
+		FD_SET(fd, &timeo_rset);
+	
+		tv.tv_sec = 0;
+		tv.tv_usec = usec;
+		return (select(fd+1, &timeo_rset, NULL, NULL, &tv));
+	}
 
+
+	/* get the sockaddr_in infomation */
+	int touMain::assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_family, char* ip, u_short port) {
+	
+		bzero(sockaddr, sizeof(*sockaddr));
+		sockaddr->sin_family = sa_family;
+		sockaddr->sin_port = htons((short)(port));
+		if( 1 != inet_pton(sa_family, ip, &sockaddr->sin_addr) )
+		return 0;
+
+		return 1;
+	}
+/*
 	void sockMng::setSocketTable(sockaddr_in *sockettemp, int sd) {
 		s = new sockTb;
 		cout <<"Address : in  table " << inet_ntoa(sockettemp->sin_addr) <<endl;
@@ -386,4 +403,4 @@ perror("send : ");
 			SS.at(i)->printall();
 		}
 	
-	  }
+	  }*/
