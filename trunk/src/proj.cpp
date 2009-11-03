@@ -100,13 +100,14 @@ int main(int argc, char* argv[])
     }
 	
 	std::cout<< "Now it's reading the data from text file" << std::endl;
-    indata.read(sendbuf, sizeof(sendbuf));
-	while( !indata.eof() ){
+        indata.read(sendbuf, sizeof(sendbuf));
+	//while( !indata.eof() ){
 		/* int sd, char *sendBufer, int len1, int flags */
+	std::cout<< sendbuf;
 	    n = tm.touSend(sockfd, sendbuf, strlen(sendbuf), 0); 
 		std::cout<< "There's are "<<n<<" data has been sent"<<std::endl;
 		indata.read(sendbuf, sizeof(sendbuf));
-	}
+	//}
 	
 	}else{
 		std::cout<< "Format Error" <<std::endl;

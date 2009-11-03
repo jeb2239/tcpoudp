@@ -22,9 +22,11 @@ int main(int argc, char** argv) {
   printf("\n");
   cb.insert("12345678", 8);
   cb.print();
-
-  cb.getAt(buf, 9, 7, end);
+  cb.getAt(buf, 5, 7, end);
   printf("\nread from buf\n%s\nindex end:%d\n", buf, end);
+
+  printf("\n");
+  cb.print();
   
   //char testcase1[1000] = "f a\ta\na\0a f";
   //char testcase2[1000] = "abcdefghij";

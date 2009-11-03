@@ -7,9 +7,11 @@
 #include <iostream>
 #include <algorithm>
 #include "touControlBlock.h"
-#define TOU_SMSS                1464
+
+/* TOU_SMSS would be just like TOU_MSS */
+#define TOU_SMSS                1456
 #define TOU_RMSS                536
-#define TOU_MAX_SSTHRESH        65535
+#define TOU_MAX_SSTHRESH        65536
 #define u_long  unsigned long
 class ssca {
 private:

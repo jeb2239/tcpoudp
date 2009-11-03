@@ -20,8 +20,7 @@ typedef unsigned char	u_char;
 #define TOUT_2MSL		3
 
 //Ethernet 1500-20-24
-#define TOU_MSS			14 
-
+#define TOU_MSS			1456 
 //Status
 #define TOUS_CLOSED		0
 #define TOUS_LISTEN		1
@@ -48,7 +47,6 @@ typedef unsigned char	u_char;
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-//#include <iostream>
 #include <sstream>
 #include<vector>
 /***************************************************
@@ -58,17 +56,16 @@ typedef unsigned char	u_char;
 /***************************************************
  * Include from self-define header
  **************************************************/
-#include "timer.h"					//timer library
+#include "timer.h"				//timer library
 #include "trace.h"
 //#include "touControlBlock.h"
-#include "toucong.h"					//congestion
-
-				//ToU Control Block
+#include "toucong.h"				//congestion
+						//ToU Control Block
 #include "circularbuffer.h"
-#include "touheader.h"					//touheader
+#include "touheader.h"				//touheader
 
 
-
+extern FILE *_fptrace;
 extern boost::mutex soctabmutex;
 
 
@@ -91,11 +88,12 @@ class sockTb {
 
     sockTb()
 	{
+	  sip = (char*)malloc(sizeof(char)*50);
+	  dip = (char*)malloc(sizeof(char)*50);
 		cid++;
 
 	}
 	
-
 	void setcid(int a) {
         
 		cid = a;   

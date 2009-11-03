@@ -2,6 +2,8 @@
 vector<sockTb*> SS;
 int cid_ = 0;
 boost::mutex soctabmutex;
+FILE *_fptrace = fopen("../debug.txt", "w");
+
 
 using namespace std;
 
@@ -206,18 +208,23 @@ using namespace std;
 		int len3, len2;
 		len3 = len1;
 		index = 0;
-		ssca wnd;
+		sockTb s;
+		ssca wnd(&(s.tc));
 		s.CbSendBuf.setSize(4000);
 		s1 = sm.getSocketTable(sd);
 		cout << endl << " INSIDE TOUSEND () " <<endl;
 		// check circular buffer size and insert data into it 
 		while(1)
 		{		
+		        TRACE(6, "cur wnd size %d\n", wnd.getwnd());
 			int checkSize = s.CbSendBuf.getSize();
-			
+			std::cout<< "checksize" << checkSize <<std::endl;
+			std::cout<< "length" << len3 <<std::endl;
 			if(len3 <= checkSize)
 			{
 				s.CbSendBuf.insert(sendBufer,len3);
+				s.CbSendBuf.print();
+				
 				len2 = len1;
 				break;
 			}
@@ -230,6 +237,7 @@ using namespace std;
 					len2 = len2 + checkSize;
 				}	
 				index = index + checkSize;
+				std::cout<< "TEMP" << temp <<std::endl;
 							
 				s.CbSendBuf.insert(temp,(checkSize));
 				
@@ -241,15 +249,12 @@ using namespace std;
 
 		int seq = tp.t.seq;
 		int numbytes;		
-		struct sockaddr_in* sockaddr;
-		sockTb s;
+		struct sockaddr_in sockaddr;
 		int end;
 		char *buffer;
-		while(1)
-		{
 			u_long w = wnd.getwnd();
-			int n = int(w/int(TOU_MSS));
-			
+			int  n = int(w/int(TOU_MSS));
+		      	//std::cout<<"N is " <<n << " "<<w << " " <<wnd.getwnd()<<endl;
 			for (int i = 0; i < n; i++)
 			{
 				//memcpy(tp.buf,CbSendBuf,TOU_MSS);
@@ -257,7 +262,8 @@ using namespace std;
 				s.CbSendBuf.getAt(buffer, int(TOU_MSS), end);
 				memcpy(tp.buf,buffer,TOU_MSS);				
 				numbytes = TOU_MSS;
-				int ck = assignaddr(sockaddr, AF_INET, s1->sip, s1->sport); 
+				std::cout<<"tp.buf is " <<tp.buf <<endl;
+				int ck = assignaddr(&sockaddr, AF_INET, s1->sip, s1->sport); 
 				cout << " Socket built : "<< ck << endl;
 				sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr *)&sockaddr, sizeof(struct sockaddr_in));
 				if(timero(sd,1000000) == 0)
@@ -282,7 +288,6 @@ using namespace std;
 					}
 				}
 			}
-		}
 /*
 		memcpy(tp.buf, sendBuffer, len1);
 		tp.t.seq = tp.t.seq + act2;
@@ -313,12 +318,12 @@ using namespace std;
 		int no1, no2 = 0;
 		memset(buf12,0,10);
 		size_t len = sizeof(sockaddr);
-		sockaddr_in* sockaddr;
+		sockaddr_in sockaddr;
 		
 		cout << endl << " INSIDE TOURECV () " <<endl;
 		
 		//Recv data
-		int ck = assignaddr(sockaddr, AF_INET, s.sip, s.sport); 
+		int ck = assignaddr(&sockaddr, AF_INET, s.sip, s.sport); 
 		cout << "Socket created : " << ck << endl;	
 		if(timero(sd,6000000)==0)
 			return no2;
@@ -392,10 +397,11 @@ void sockMng::setSocketTable(struct sockaddr_in *sockettemp, int sd) {
 		//cout<<"\tport:-> "<<ntohs(socket2->sin_port)<<endl;
 		boost::mutex::scoped_lock lock(soctabmutex);
 		s->sockd = sd;
-		s->dport = 1500;
+		strcpy(s->dip, "127.0.0.1");
+		s->dport = 8888; 
 		s->sport = ntohs(sockettemp->sin_port);
 		s->sip = inet_ntoa(sockettemp->sin_addr);
-                s->setcid(cid_++);
+                //s->setcid(cid_++);
 		SS.push_back(s);
 
 		for(int i = 0;i < SS.size();i++)

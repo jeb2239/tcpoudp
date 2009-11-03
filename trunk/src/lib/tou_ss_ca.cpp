@@ -22,7 +22,8 @@ void ssca::addwnd() {
 }
 
 u_long ssca::getwnd() {
-  u_long curwnd = std::min(tb->snd_cwnd, tb->snd_awnd);
+  //u_long curwnd = std::min(tb->snd_cwnd, tb->snd_awnd);
+  u_long curwnd = tb->snd_cwnd;
   return curwnd;
 }
 
