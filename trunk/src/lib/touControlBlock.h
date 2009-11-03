@@ -1,6 +1,8 @@
+
 /******************************************************
  *  * ToU control block
  *   * ***************************************************/
+#define TOUT_TIMERS		4
 class touCb {
     public:
       short               t_state;                //11 connection states

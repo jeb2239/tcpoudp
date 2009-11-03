@@ -39,20 +39,21 @@ int main(int argc, char* argv[])
       printf("error in server's getaddrinfo");
     }
 	
-	/* socket initialization */
-    if( -1 == (sockfd = tm.touSocket(adinfo->ai_family, adinfo->ai_socktype, adinfo->ai_protocol)))
-      err_exit("error in server's socket creation");
+	/* socket initialization  | type: adinfo->ai_protoco*/
+    if( -1 == (sockfd = tm.touSocket(adinfo->ai_family, adinfo->ai_socktype, 0)))
+      printf("error in server's socket creation");
     std::cout << "SERVER socket function returned" << std::endl;
 
     /* bind */
     if( 0 != tm.touBind(sockfd, adinfo->ai_addr, adinfo->ai_addrlen))
-      err_msg("error in server binding");
+      printf("error in server binding");
     std::cout << "SERVER bind function returned" << std::endl;
 
 
     printf("[Welcome to the ToU Server Mode.]\n");
 	/* keep waiting for incoming connection */
-	if (1 == tm.touAccept(sockfd,(struct sockaddr_in*)&cliaddr , sizeof(cliaddr) )) {
+	socklen_t len = (int)sizeof(cliaddr);
+	if (1 == tm.touAccept(sockfd,(struct sockaddr_in*)&cliaddr , &len )) {
 		std::cout << "SERVER touAccept return on SUCCESS !! " << std::endl;
 	}
 
@@ -72,8 +73,8 @@ int main(int argc, char* argv[])
       printf("error in client's getaddrinfo");
     }
 
-	/* socket */
-    if( -1 == (sockfd = tm.touSocket(adinfo->ai_family, adinfo->ai_socktype, adinfo->ai_protocol)))
+	/* socket |type: adinfo->ai_protocol*/
+    if( -1 == (sockfd = tm.touSocket(adinfo->ai_family, adinfo->ai_socktype, 0)))
       printf("error in server's socket creation");
 	  
 	/* client bind with local machine */
@@ -83,11 +84,11 @@ int main(int argc, char* argv[])
 	//Set socket structures
 	memset(&svraddr, 0, sizeof(svraddr));
 	svraddr.sin_family = AF_INET;
-	svraddr.sin_addr.s_addr= inet_aton(argv[3]);
-	svraddr.sin_port = htons(argv[4]);
+	inet_pton(AF_INET,argv[3],&(svraddr.sin_addr));
+	svraddr.sin_port = htons(atoi(argv[4]));
   
 	/* connect to client server */
-	if( -1 == tm.touConnect(sockfd,(struct sockaddr_in*)&socket1,sizeof(socket1)))
+	if( -1 == tm.touConnect(sockfd,(struct sockaddr_in*)&svraddr,sizeof(svraddr)))
 	  printf("error in client connect");
 	std::cout << "Connect returns successfully" <<std::endl;
 	

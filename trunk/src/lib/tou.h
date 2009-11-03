@@ -48,28 +48,28 @@ typedef unsigned char	u_char;
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <iostream>
+//#include <iostream>
 #include <sstream>
 #include<vector>
 /***************************************************
  * Include from BOOST library
  **************************************************/
 
-
 /***************************************************
  * Include from self-define header
  **************************************************/
 #include "timer.h"					//timer library
 #include "trace.h"
-#include "touControlBlock.h"				//ToU Control Block
-#include "circularbuffer.h"
-#include "touheader.h"					//touheader
+//#include "touControlBlock.h"
 #include "toucong.h"					//congestion
 
+				//ToU Control Block
+#include "circularbuffer.h"
+#include "touheader.h"					//touheader
 
 
-boost::mutex soctabmutex;
 
+extern boost::mutex soctabmutex;
 
 
 
@@ -108,50 +108,17 @@ class sockTb {
 	}
 
 };
-int cid_ =0;
+extern int cid_;
 
-vector<sockTb*> SS;
+extern vector<sockTb*> SS;
 //int cid_ =0;
 class sockMng {
 	public :
 	sockTb *s;
+	struct sockTb* getSocketTable(int);
+	void setSocketTable(struct sockaddr_in *, int); 
 
-	
-	
-
-  	void setSocketTable(struct sockaddr_in *sockettemp, int sd) {
-		s = new sockTb;
-		cout <<"Address : in  table " << inet_ntoa(sockettemp->sin_addr) <<endl;
-		//cout<<"\tport:-> "<<ntohs(socket2->sin_port)<<endl;
-		boost::mutex::scoped_lock lock(soctabmutex);
-		s->sockd = sd;
-		s->dport = 1500;
-		s->sport = ntohs(sockettemp->sin_port);
-		s->sip = inet_ntoa(sockettemp->sin_addr);
-                s->setcid(cid_++);
-		SS.push_back(s);
-
-		for(int i = 0;i < SS.size();i++)
-		{
-				
-			cout << "printing vector"<<endl ;
-			cout << i << " : ";
-			SS.at(i)->printall();
-		}
-	
-	  }
-	
-	 /* return socktable ptr if matchs with sockfd 
-	  * return NULL if failure */
-         struct sockTb* getSocketTable(int sockfd) {
-	        sockTb	*s;
-	 	for(stbiter=SS.begin(); stbiter!=SS.end(); stbiter++)
-	        {
-		  if((*stbiter)->sockd == sockfd)
-		    return (*stbiter);
-	   	}
-		return NULL;
-	 }
+  	
 
 	 private:
 	 vector<sockTb*>::iterator stbiter;

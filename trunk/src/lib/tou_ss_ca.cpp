@@ -5,7 +5,7 @@
 
 #include "toucong.h"
 
-ssca::ssca(toucb *ptb):tb(ptb) {
+ssca::ssca(touCb *ptb):tb(ptb) {
   tb->snd_cwnd = TOU_SMSS;
   tb->snd_ssthresh = TOU_MAX_SSTHRESH;
 }

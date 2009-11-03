@@ -1,4 +1,7 @@
 #include "tou.h"
+vector<sockTb*> SS;
+int cid_ = 0;
+boost::mutex soctabmutex;
 
 using namespace std;
 
@@ -204,7 +207,7 @@ using namespace std;
 		len3 = len1;
 		index = 0;
 		ssca wnd;
-		
+		s.CbSendBuf.setSize(4000);
 		s1 = sm.getSocketTable(sd);
 		cout << endl << " INSIDE TOUSEND () " <<endl;
 		// check circular buffer size and insert data into it 
@@ -382,6 +385,40 @@ using namespace std;
 
 		return 1;
 	}
+
+void sockMng::setSocketTable(struct sockaddr_in *sockettemp, int sd) {
+		s = new sockTb;
+		cout <<"Address : in  table " << inet_ntoa(sockettemp->sin_addr) <<endl;
+		//cout<<"\tport:-> "<<ntohs(socket2->sin_port)<<endl;
+		boost::mutex::scoped_lock lock(soctabmutex);
+		s->sockd = sd;
+		s->dport = 1500;
+		s->sport = ntohs(sockettemp->sin_port);
+		s->sip = inet_ntoa(sockettemp->sin_addr);
+                s->setcid(cid_++);
+		SS.push_back(s);
+
+		for(int i = 0;i < SS.size();i++)
+		{
+				
+			cout << "printing vector"<<endl ;
+			cout << i << " : ";
+			SS.at(i)->printall();
+		}
+	
+	  }
+	
+	 /* return socktable ptr if matchs with sockfd 
+	  * return NULL if failure */
+         struct sockTb* sockMng::getSocketTable(int sockfd) {
+	        sockTb	*s;
+	 	for(stbiter=SS.begin(); stbiter!=SS.end(); stbiter++)
+	        {
+		  if((*stbiter)->sockd == sockfd)
+		    return (*stbiter);
+	   	}
+		return NULL;
+	 }
 /*
 	void sockMng::setSocketTable(sockaddr_in *sockettemp, int sd) {
 		s = new sockTb;
