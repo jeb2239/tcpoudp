@@ -73,7 +73,7 @@ boost::mutex soctabmutex;
  * ***************************************************/
 class sockTb {
   public:
-    touCb		*tc;			//tcp control block
+    touCb		tc;			//tcp control block
     int			sockd;			//socket file descriptor
     u_short 		sport;
     u_short 		dport;
@@ -101,12 +101,10 @@ class sockTb {
 vector<sockTb*> SS;
 int cid_ =0;
 class sockMng {
-        
-	
 	public :
 	sockTb *s;
 	
-  	void setSocketTable(sockaddr_in *sockettemp, int sd) {
+  	void setSocketTable(struct sockaddr_in *sockettemp, int sd) {
 		s = new sockTb;
 		cout <<"Address : in  table " << inet_ntoa(sockettemp->sin_addr) <<endl;
 		//cout<<"\tport:-> "<<ntohs(socket2->sin_port)<<endl;
@@ -128,7 +126,21 @@ class sockMng {
 	
 	  }
 	
-	//void getSocketTable()
+	 /* return socktable ptr if matchs with sockfd 
+	  * return NULL if failure */
+         struct sockTb* getSocketTable(int sockfd) {
+	        sockTb	*s;
+	 	for(stbiter=SS.begin(); stbiter!=SS.end(); stbiter++)
+	        {
+		  if(stbiter->sockd == sockfd)
+		    return stbiter;
+	   	}
+		return NULL;
+	 }
+
+	 private:
+	 vector<sockTb*>::iterator stbiter;
+
 	
 };
 
@@ -369,9 +381,7 @@ perror("send : ");
 		
 
 		sockMng sm;
-		//cout <<"Address :     " << inet_ntoa(socket2->sin_addr) <<endl;
-
-		sm.setSocketTable(socket2, sd);
+		sm.setSocketTable((struct sockaddr_in *)&socket2, sd);
 		return true;	
 }
 	

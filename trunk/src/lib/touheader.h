@@ -27,7 +27,26 @@ class touHeader {
 class touPkg {
   public:
     touHeader		t;
-    char 			buf[TOU_MSS];
+    char 		buf[TOU_MSS];
+
+  private:
+    int putHeaderSeq(u_long seq=0, u_long ack_seq=0){
+      t.seq = htonl(seq);
+      t.ack_seq = htonl(ack_seq);
+      t.mag = htonl(0x7194B32E);
+    }
+
+};
+
+class touheaderack {
+  public:
+    int			sockfd;
+    touHeader		touheader;
+
+    touheaderack(int sockfd_, touHeader touhd_) {
+      sockfd = sockfd_;
+      touheader = touhd_;
+    }
 };
 
 

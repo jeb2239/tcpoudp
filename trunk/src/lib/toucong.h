@@ -9,11 +9,11 @@
 
 class ssca {
   public:
-    ssca();
+    ssca(){}
     /* init cwnd to one segment
      * init ssthresh to default */
     ssca(touCb *ptb);
-    ~ssca();
+    ~ssca(){}
 
     /* while xmitting successfully */
     void addwnd();

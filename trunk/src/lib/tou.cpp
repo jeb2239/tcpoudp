@@ -1,7 +1,7 @@
 #include "tou.h"
 
 using namespace std;
-class touMain {
+class touMain__ {
  	
 	public :
 	unsigned long test;
