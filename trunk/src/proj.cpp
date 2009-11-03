@@ -19,6 +19,7 @@ int main(int argc, char* argv[])
   touMain				tm;
   ifstream 				indata;
 
+
 /* Init local network status */
   struct addrinfo       curinfo;
   int                   error;
