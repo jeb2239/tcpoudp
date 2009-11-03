@@ -1,11 +1,11 @@
 #include "tou.h"
 
 using namespace std;
-<<<<<<< .mine
 
-=======
-class touMain__ {
->>>>>>> .r45
+
+
+class touMain {
+
  	
 	
 	// Byte order conversions
@@ -46,7 +46,7 @@ class touMain__ {
 	//-----------------------------LISTEN -----------------------------------
 	//TODO : Modify this 
 	
-	int touListen() { 
+	int touMain::touListen() { 
 	int rv;
 	rv = listen(sd,1);
 	}
@@ -65,7 +65,7 @@ class touMain__ {
 	int touMain::touConnect(int sd, struct sockaddr_in *socket1, int addrlen) {
 		int rv;
 		
-<<<<<<< .mine
+
 		tp.t.seq = rand()%(u_long)65535;
 		tp.t.mag = (u_long)9999;
 		convertToByteOrder(tp);
@@ -112,7 +112,7 @@ class touMain__ {
 		
 		//send final 3way handshake
 		
-=======
+
 		//send syn and seq no
 		//TODO : change the mod to 2^32 and the magic number also
 		
@@ -162,55 +162,40 @@ perror("send : ");
 		
 		//send final 3way handshake
 		
->>>>>>> .r45
+
 		rv = sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr*)socket1, addrlen);
-<<<<<<< .mine
+
 		cout << " Sent the third handshake " << endl;
 		cout<<" sport : in connect : "<< ntohs(socket1->sin_port)<<endl;
 		cout <<"Address" << inet_ntoa(socket1->sin_addr) <<endl;
 		sockMng sm;
 		sm.setSocketTable(socket1, sd);
 
-=======
+
 		cout << " Sent the third handshake " << endl;
 		cout<<" sport : in connect : "<< ntohs(socket1->sin_port)<<endl;
 	cout <<"Address" << inet_ntoa(socket1->sin_addr) <<endl;
 		sockMng sm;
 		sm.setSocketTable(socket1, sd);
 
->>>>>>> .r45
+
 		return true;
 	}
 
 
-//---------------------------ACCEPT --------------------- 
-	
-<<<<<<< .mine
-	int touMain::touAccept(int sd, struct sockaddr_in *socket2, socklen_t *addrlen) {
-		
-=======
-		//Recv ACK
-			
-		rec = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr *)&socket2,&len);
-		convertFromByteOrder(tp);
-		cout <<" received ack is : " << tp.t.ack_seq << endl;
-		
-		return no;
-	}
-	*/
+
 	
 	//---------------------------ACCEPT --------------------- 
 	
-	int touAccept(int sd, struct sockaddr_in *socket2, socklen_t *addrlen) {
->>>>>>> .r45
+	int touMain::touAccept(int sd, struct sockaddr_in *socket2, socklen_t *addrlen) {
+
 		int rv, control=0, flagforsyn = 1;
-<<<<<<< .mine
+
 		size_t len = sizeof(sockaddr);
 		convertToByteOrder(tp);
 		cout << endl << " INSIDE TOUACCEPT () " <<endl;
 
-		// receive first handshake
-=======
+
 		size_t len = sizeof(sockaddr);
 		convertToByteOrder(tp);
 		cout << endl << " INSIDE TOUACCEPT () " <<endl;
@@ -220,7 +205,7 @@ perror("send : ");
 
 		//sockTb s2;
 		// receive first handshake
->>>>>>> .r45
+
 		
 		rv = recvfrom(sd, &tp, sizeof tp, 0,(struct sockaddr *)&socket2, &len);
 		cout << "seq no received from client : " << tp.t.seq<<endl;
@@ -257,7 +242,7 @@ perror("send : ");
 		
 
 		return true;	
-<<<<<<< .mine
+
 	}
 
 
@@ -293,16 +278,12 @@ perror("send : ");
 			}
 			else             //What if the circular buffer is full 
 			{
-				CbSendBuf.insert(sendBufer,(checksize));
+				
+				CbSendBuf.insert(temp,(checksize));
 				index = checksize;
 				
 				int j = 0;  //Index for temp buf
-				for(int i = index; i < len1; i++)
-				{
-					temp[j++] = sendBufer[i];
-					len2++;
-				}
-				sendBufer = temp;
+				
 				if( len2 >= len1) break;
 				
 			}
@@ -368,9 +349,9 @@ perror("send : ");
 		return no1;
 	}
 */
-=======
+
 }
->>>>>>> .r45
+
 	
 	//-------------------------CLOSE------------------------------
 	
