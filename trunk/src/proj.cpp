@@ -1,99 +1,116 @@
 #include "tou.h"
-	
-	
+#include <fstream>
+
+#define	MAXMSG	1024
+#define ERROR	1
+#define	SUCCESS	0
+
 int main(int argc, char* argv[])
 {
-	touHeader t;
-	touMain tm;
-	int sd,sockd;
-	char msg[50];
-	char send_data[1024],recv_data[1024];
-	memset(msg,0,50);
-	struct sockaddr_in socket1;
-	struct sockaddr_in socket2;
-	struct sockaddr_in socket3;
-	
-	// Message to be sent
-	strcpy(msg,argv[2]);
-	struct hostent *h;
-	
-	//Get host name
-	h = gethostbyname(argv[1]);
+  int                   sockfd;
+  struct addrinfo       *adinfo;
+  struct sockaddr_in    cliaddr;
+  struct sockaddr_in    svraddr;
+  //struct in_addr        a;
+  struct hostent        *he;
+  char 					recvbuf[MAXMSG] = "";
+  char 					sendbuf[MAXMSG] = "";
+  int					n = 0;
+  touMain				tm;
+  ifstream 				indata;
 
-	if(h==NULL) {
-      printf("%s: unknown host '%s' \n", argv[0], argv[1]);
+/* Init local network status */
+  struct addrinfo       curinfo;
+  int                   error;
+  memset(&curinfo, 0, sizeof(curinfo));
+  curinfo.ai_family = AF_INET;
+  curinfo.ai_socktype = SOCK_DGRAM;
+  curinfo.ai_flags = AI_PASSIVE;
+
+/* Get the parameters and decide whether it's a server or
+ * client process */
+  if( argc==2 && !strncmp(argv[1], "-s", 2) )
+  {/* server side */
+  
+    /* get the local network information */
+    error = getaddrinfo(NULL, "8888", &curinfo, &adinfo);
+    if (0 != error){
+      fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(error));
+      printf("error in server's getaddrinfo");
+    }
+	
+	/* socket initialization */
+    if( -1 == (sockfd = tm.touSocket(adinfo->ai_family, adinfo->ai_socktype, adinfo->ai_protocol)))
+      err_exit("error in server's socket creation");
+    std::cout << "SERVER socket function returned" << std::endl;
+
+    /* bind */
+    if( 0 != tm.touBind(sockfd, adinfo->ai_addr, adinfo->ai_addrlen))
+      err_msg("error in server binding");
+    std::cout << "SERVER bind function returned" << std::endl;
+
+
+    printf("[Welcome to the ToU Server Mode.]\n");
+	/* keep waiting for incoming connection */
+	if (1 == tm.touAccept(sockfd,(struct sockaddr_in*)&cliaddr , sizeof(cliaddr) )) {
+		std::cout << "SERVER touAccept return on SUCCESS !! " << std::endl;
+	}
+
+	/* waiting for incoming msg */
+	while(1) {
+		n = tm.touRecv(sockfd, recvbuf, MAXMSG, 0); 
+		std::cout<< "# of bytes read: "<< n << std::endl;
+		std::cout<< recvbuf <<std::endl;
+		memset(recvbuf, 0, MAXMSG);
+	}
+
+  }else if ( argc==6 && !strncmp(argv[1], "-c", 2) ){
+   /* client side */
+    error = getaddrinfo(NULL, argv[5], &curinfo, &adinfo);
+    if( 0 != error ){
+      fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(error));
+      printf("error in client's getaddrinfo");
     }
 
-    printf("%s: sending data to '%s' (IP : %s) \n", argv[0], h->h_name,
-    inet_ntoa(*(struct in_addr *)h->h_addr_list[0]));
-    
-    //Set socket 2
-	//Server socket    
-    memset(&socket1, 0, sizeof(socket1));
-   	socket1.sin_family = h->h_addrtype;
-   	memcpy((char *) &socket1.sin_addr.s_addr,h->h_addr_list[0], h->h_length);
-    socket1.sin_port = htons(1500);
+	/* socket */
+    if( -1 == (sockfd = tm.touSocket(adinfo->ai_family, adinfo->ai_socktype, adinfo->ai_protocol)))
+      printf("error in server's socket creation");
+	  
+	/* client bind with local machine */
+    if( 0 != tm.touBind(sockfd, adinfo->ai_addr, adinfo->ai_addrlen))
+      printf("error in client binding");
 	
-	//CREATE socket
-	 //Client socket
-	sockd = tm.touSocket(AF_INET,SOCK_DGRAM,0);
-	
-	//Set socket 1
-	memset(&socket2,0,sizeof(socket2));
-	socket2.sin_family = AF_INET;
-	socket2.sin_addr.s_addr=htonl(INADDR_ANY);
-	socket2.sin_port = htons(1501);
-	
-	//BIND
-	sd = tm.touBind(sockd,(struct sockaddr*) &socket2,sizeof socket2);
-	unsigned long len;
-	len = sizeof tm.tp.t;
-	
-	//CONNECT
-	sd = tm.touConnect(sockd,(struct sockaddr_in*)&socket1,sizeof(socket1));
-	cout << "Connect returns : "<< sd << endl;
-	/*
-	while(1){
-	cout<< "Enter data to be sent : " << endl;
-	gets(send_data);
-    	if (strcmp(send_data , "q") != 0 && strcmp(send_data , "Q") != 0)
-           tm.touSend(send_data,strlen(send_data)); 
-		else
-  		{
-		 	tm.touSend(send_data,strlen(send_data));
-   	    	close(sockd);
-   	     	break;
-   		}
-
-	}*/
-	return 0;
-}
-
-
-/*
-#include "timer.h"
-#include "trace.h"
-
-int main(){
-  FILE* _fptrace;
-  _fptrace = fopen("debug.txt", "w");
-  fprintf(_fptrace, "abc%d\n", 1);
-
-  printf("Hello\n");
-  TRACE(5,"TRACE test: %d LObject map: %d\n", 1, 2 );
-
-  test code for timer 
-  timerMng timermng;
-  for(int i=1,j=1;i<=15000; i++,j++)
-  {
-    timermng.add(j,i+1, (long)i*1000, i+2); //here the first and last parameter will come automatically from connection
-    timermng.add(j,(i*1000)+1, (long)i*1000 + 1, (i*1000)+2);
-  }
-  timermng.add(1,3333,4000,101);
-  sleep(1);
-  timermng.delete_timer(1, 4, 5);
-  timermng.delete_timer(2, 5, 6);
+	//Set socket structures
+	memset(&svraddr, 0, sizeof(svraddr));
+	svraddr.sin_family = AF_INET;
+	svraddr.sin_addr.s_addr= inet_aton(argv[3]);
+	svraddr.sin_port = htons(argv[4]);
   
-  return 0;
+	/* connect to client server */
+	if( -1 == tm.touConnect(sockfd,(struct sockaddr_in*)&socket1,sizeof(socket1)))
+	  printf("error in client connect");
+	std::cout << "Connect returns successfully" <<std::endl;
+	
+	/* reading file */
+	indata.open(argv[2]); // opens the file
+    if(!indata) { // file couldn't be opened
+      cerr << "Error: file could not be opened" << endl;
+      exit(1);
+    }
+	
+	std::cout<< "Now it's reading the data from text file" << std::endl;
+    indata.read(sendbuf, sizeof(sendbuf));
+	while( !indata.eof() ){
+		/* int sd, char *sendBufer, int len1, int flags */
+	    n = tm.touSend(sockfd, sendbuf, strlen(sendbuf), 0); 
+		std::cout<< "There's are "<<n<<" data has been sent"<<std::endl;
+		indata.read(sendbuf, sizeof(sendbuf));
+	}
+	
+	}else{
+		std::cout<< "Format Error" <<std::endl;
+	}
+	indata.close();
+	close(sockfd);
+	return 0;	
 }
-*/
