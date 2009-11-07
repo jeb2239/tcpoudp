@@ -76,29 +76,24 @@ extern boost::mutex soctabmutex;
 
 class sockTb {
   public:
-    touCb		tc;			//tcp control block
+    touCb		tc;					//tcp control block
     int			sockd;			//socket file descriptor
-    u_short 		sport;
-    u_short 		dport;
-    char*	 	sip;
-    char*	  	dip;
-    int 		cid;
+		int     sockstate;  //SOCK_CREATED, BIND, LISTEN, CONNECT, ESTABLISHED, TERMINATING
+    u_short sport;
+    u_short dport;      //destination port
+    string  sip;
+    string  dip;        //destination ip 
+    int 		cid;        //connection id. probably dont need it
+    int     tcpstate;   //state in which the connection is   
     CircularBuffer 	CbSendBuf;
     CircularBuffer 	CbRecvBuf;
-
-    sockTb()
-	{
-	  sip = (char*)malloc(sizeof(char)*50);
-	  dip = (char*)malloc(sizeof(char)*50);
-		cid++;
-
+    
+    sockTb() {
+	 
+		
 	}
 	
-	void setcid(int a) {
-        
-		cid = a;   
-  	}
-
+	
 	void printall() {
 
 	cout<<"sockd : "<<sockd<<" sport :"<<sport<<" dport :"<<dport <<endl;
@@ -106,21 +101,23 @@ class sockTb {
 	}
 
 };
-extern int cid_;
+
 
 extern vector<sockTb*> SS;
 //int cid_ =0;
 class sockMng {
 	public :
-	sockTb *s;
+	
 	struct sockTb* getSocketTable(int);
-	void setSocketTable(struct sockaddr_in *, int); 
-
+	void setSocketTable(struct sockaddr_in *, int);
+  void setSocketTableD(struct sockaddr_in *, int); 
+  void setSocketTable(int );
+  void delSocketTable(int );
   	
 
 	 private:
 	 vector<sockTb*>::iterator stbiter;
-
+   sockTb *s;
 	
 
 };
