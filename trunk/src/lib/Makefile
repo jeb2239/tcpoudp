@@ -31,7 +31,9 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 subdir = src/lib
-DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
+DIST_COMMON = README $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
+	AUTHORS COPYING ChangeLog INSTALL NEWS depcomp install-sh \
+	missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -43,7 +45,9 @@ AR = ar
 ARFLAGS = cru
 libtou_a_AR = $(AR) $(ARFLAGS)
 libtou_a_LIBADD =
-am_libtou_a_OBJECTS = tou.$(OBJEXT) timer.$(OBJEXT) timerMng.$(OBJEXT)
+am_libtou_a_OBJECTS = tou.$(OBJEXT) timer.$(OBJEXT) timerMng.$(OBJEXT) \
+	tou_ss_ca.$(OBJEXT) tou_process_send.$(OBJEXT) \
+	circularbuffer.$(OBJEXT)
 libtou_a_OBJECTS = $(am_libtou_a_OBJECTS)
 DEFAULT_INCLUDES = -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -145,7 +149,7 @@ target_alias =
 top_builddir = ../..
 top_srcdir = ../..
 noinst_LIBRARIES = libtou.a
-libtou_a_SOURCES = tou.cpp timer.cpp timerMng.cpp
+libtou_a_SOURCES = tou.cpp timer.cpp timerMng.cpp tou_ss_ca.cpp tou_process_send.cpp circularbuffer.cpp
 INCLUDES = -I../../boostlib/boost_1_40_0
 CLEANFILES = *~ *.o
 all: all-am
@@ -195,9 +199,12 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+include ./$(DEPDIR)/circularbuffer.Po
 include ./$(DEPDIR)/timer.Po
 include ./$(DEPDIR)/timerMng.Po
 include ./$(DEPDIR)/tou.Po
+include ./$(DEPDIR)/tou_process_send.Po
+include ./$(DEPDIR)/tou_ss_ca.Po
 
 .cpp.o:
 	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

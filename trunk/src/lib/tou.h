@@ -20,7 +20,7 @@ typedef unsigned char	u_char;
 #define TOUT_2MSL		3
 
 //Ethernet 1500-20-24
-#define TOU_MSS			1456 
+#define TOU_MSS			100 
 //Status
 #define TOUS_CLOSED		0
 #define TOUS_LISTEN		1
@@ -48,6 +48,7 @@ typedef unsigned char	u_char;
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sstream>
+
 #include<vector>
 /***************************************************
  * Include from BOOST library
@@ -59,16 +60,14 @@ typedef unsigned char	u_char;
 #include "timer.h"				//timer library
 #include "trace.h"
 //#include "touControlBlock.h"
-#include "toucong.h"				//congestion
-						//ToU Control Block
+#include "toucong.h"			//congestion
+								//ToU Control Block
 #include "circularbuffer.h"
-#include "touheader.h"				//touheader
+#include "touheader.h"			//touheader
 
 
 extern FILE *_fptrace;
 extern boost::mutex soctabmutex;
-
-
 
 /******************************************************
  * socket table
@@ -76,50 +75,67 @@ extern boost::mutex soctabmutex;
 
 class sockTb {
   public:
-    touCb		tc;					//tcp control block
-    int			sockd;			//socket file descriptor
-		int     sockstate;  //SOCK_CREATED, BIND, LISTEN, CONNECT, ESTABLISHED, TERMINATING
+    touCb	tc;			//tcp control block
+    int		sockd;		//socket file descriptor
+	int     sockstate;  //SOCK_CREATED, BIND, LISTEN, CONNECT, ESTABLISHED, TERMINATING
     u_short sport;
     u_short dport;      //destination port
     string  sip;
     string  dip;        //destination ip 
-    int 		cid;        //connection id. probably dont need it
+    int 	cid;        //connection id. probably dont need it
     int     tcpstate;   //state in which the connection is   
     CircularBuffer 	CbSendBuf;
     CircularBuffer 	CbRecvBuf;
-    
-    sockTb() {
-	 
-		
-	}
-	
-	
-	void printall() {
+	ssca	*sc;		//congestion control class
 
-	cout<<"sockd : "<<sockd<<" sport :"<<sport<<" dport :"<<dport <<endl;
-	cout<<" sip : "<<sip<<" dip : "<<dip<<" cid : "<< cid <<endl;
+	/* TEST */
+	int		ackcount;/* FOR TEST ONLY */
+
+    sockTb() {
+      /*
+	  sip = (char*)malloc(sizeof(char)*30);
+	  dip = (char*)malloc(sizeof(char)*30);
+	  */
+      CbSendBuf.setSize(TOU_MAX_CIRCULAR_BUF);
+	  CbRecvBuf.setSize(TOU_MAX_CIRCULAR_BUF);
+	  sc = new ssca(&tc); 
+	}
+
+	~sockTb() {
+	  /*
+	  free(sip);
+	  free(dip);
+	  */
+	  delete sc;
+	}
+	void printall() {
+	cout<<"sockd  : "<<sockd<<" sport :"<<sport<<" dport :"<<dport <<endl;
+	cout<<"sip    : "<<sip<<" dip : "<<dip <<endl;
+	cout<<"cc_state: "<<tc.cc_state<<endl;
+	cout<<"snd_una: "<<tc.snd_una<<endl;
+	cout<<"snd_nxt: "<<tc.snd_nxt<<endl;
+	cout<<"snd_cwnd:"<<tc.snd_cwnd<<endl;
+	cout<<"snd_awnd:"<<tc.snd_awnd<<endl;
+	cout<<"snd_ssthresh:"<<tc.snd_ssthresh<<endl<<endl;
 	}
 
 };
 
-
 extern vector<sockTb*> SS;
 //int cid_ =0;
 class sockMng {
-	public :
+  public:
+    struct sockTb* getSocketTable(int);
+    void setSocketTable(struct sockaddr_in *, int);
+    void setSocketTableD(struct sockaddr_in *, int); 
+    void setSocketTable(int );
+    void delSocketTable(int );
 	
-	struct sockTb* getSocketTable(int);
-	void setSocketTable(struct sockaddr_in *, int);
-  void setSocketTableD(struct sockaddr_in *, int); 
-  void setSocketTable(int );
-  void delSocketTable(int );
-  	
-
-	 private:
-	 vector<sockTb*>::iterator stbiter;
-   sockTb *s;
-	
-
+	/* for test */
+	void setSocketTable(struct sockaddr_in *, int sockfd, char * ip, unsigned short port);
+  private:
+    vector<sockTb*>::iterator stbiter;
+    sockTb *s;
 };
 
 /******************************************************
@@ -158,7 +174,3 @@ class touMain {
 	int assignaddr(struct sockaddr_in *, sa_family_t , char* , u_short);
 	
 };	
-
-
-
-

@@ -157,6 +157,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 tou_SOURCES = proj.cpp
 INCLUDES = -I./lib -I../boostlib/boost_1_40_0
+FLAGS = -g
 
 # ../boostlib/boost_1_40_0/stage/lib/libboost_data_time.a \
 # 	../boostlib/boost_1_40_0/stage/lib/libboost_system.a \

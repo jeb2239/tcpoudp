@@ -1,4 +1,5 @@
-tou.o tou.o: tou.cpp tou.h /usr/include/stdio.h /usr/include/features.h \
+tou_process_send.o tou_process_send.o: tou_process_send.cpp \
+  tou_process_send.h tou.h /usr/include/stdio.h /usr/include/features.h \
   /usr/include/sys/cdefs.h /usr/include/bits/wordsize.h \
   /usr/include/gnu/stubs.h /usr/include/gnu/stubs-32.h \
   /usr/lib/gcc/i486-linux-gnu/4.2.4/include/stddef.h \
@@ -1259,6 +1260,8 @@ tou.o tou.o: tou.cpp tou.h /usr/include/stdio.h /usr/include/features.h \
   ../../boostlib/boost_1_40_0/boost/date_time/posix_time/time_parsers.hpp \
   ../../boostlib/boost_1_40_0/boost/timer.hpp trace.h toucong.h \
   touControlBlock.h circularbuffer.h touheader.h
+
+tou_process_send.h:
 
 tou.h:
 

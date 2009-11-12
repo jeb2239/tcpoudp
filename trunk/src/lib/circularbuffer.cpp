@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 
+boost::mutex insertqmutex;
 CircularBuffer::CircularBuffer() {
   m_uiHi=0;       //Head index
   m_uiTi=0;       //Tail index
@@ -35,6 +36,7 @@ CircularBuffer::~CircularBuffer() {
  */
 
 int CircularBuffer::insert(char* buf, int n) {
+  boost::mutex::scoped_lock lock(insertqmutex);
   int start, end;
   return insert(buf, n, start, end);
 }//insert
@@ -111,7 +113,7 @@ int CircularBuffer::insert(char* buf, int n, int& start, int& end) {
   0 if no elements to be removed
 */
 int CircularBuffer::remove(int n) {
-
+  boost::mutex::scoped_lock lock(insertqmutex);
   //if total number of elements are zero or n <= 0
   if(0==m_uiTotEl || n <= 0) {
     return 0;
@@ -141,6 +143,7 @@ int CircularBuffer::remove(int n) {
   WARNING: does not check end of queue
 */
 int CircularBuffer::getAt(char* buf, int start, int n, int& end) {
+	boost::mutex::scoped_lock lock(insertqmutex);
   //if no elements in the buffer
   if(0 >= n || 0==m_uiTotEl) {
     return 0;
@@ -179,7 +182,7 @@ int CircularBuffer::getAt(char* buf, int start, int n, int& end) {
   kindof act as an iterator
 */
 int CircularBuffer::getAt(char* buf, int n, int& end) {
-
+  boost::mutex::scoped_lock lock(insertqmutex);
   //if no elements in the buffer
   if(0 >= n || 0==m_uiTotEl) {
     return 0;
@@ -218,6 +221,7 @@ int CircularBuffer::getAt(char* buf, int n, int& end) {
   Get queue head
 */
 int CircularBuffer::getHead() {
+	boost::mutex::scoped_lock lock(insertqmutex);
   return m_uiHi;
 }//Head
 
@@ -226,9 +230,17 @@ int CircularBuffer::getHead() {
   Get the size of the queue
 */
 int CircularBuffer::getSize() {
+	boost::mutex::scoped_lock lock(insertqmutex);
   return m_uiSize;
 }//getSize
 
+/*
+ * Get the size which are available in the queue
+ */
+int CircularBuffer::getAvSize() {
+	boost::mutex::scoped_lock lock(insertqmutex);
+  return m_uiSize-m_uiTotEl;
+}
 
 /*
   set the size of the queue
@@ -236,6 +248,7 @@ int CircularBuffer::getSize() {
   1 successful
 */
 int CircularBuffer::setSize(int size) {
+	boost::mutex::scoped_lock lock(insertqmutex);
   m_uiSize = size;
 
   if(m_buf!=NULL) {
@@ -258,6 +271,7 @@ int CircularBuffer::setSize(int size) {
   get the total number of elements in queue
 */
 int CircularBuffer::getTotalElements() {
+	boost::mutex::scoped_lock lock(insertqmutex);
   return m_uiTotEl;
 }//getTotalElements
 

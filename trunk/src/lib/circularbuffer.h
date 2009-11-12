@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <boost/thread.hpp>
+#include <boost/shared_ptr.hpp>
 
 class CircularBuffer {
 
@@ -45,6 +47,11 @@ public:
     Get the size of the queue
   */
   int getSize();
+
+  /*
+   * Get the size which are available in the queue
+   */
+  int getAvSize();
 
   /*
     set the size of the queue

@@ -1,5 +1,5 @@
 noinst_LIBRARIES = libtou.a
-libtou_a_SOURCES = tou.cpp timer.cpp timerMng.cpp
+libtou_a_SOURCES = tou.cpp timer.cpp timerMng.cpp tou_ss_ca.cpp tou_process_send.cpp circularbuffer.cpp
 
 INCLUDES = -I../../boostlib/boost_1_40_0
 
