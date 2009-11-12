@@ -1,7 +1,7 @@
 #include "tou.h"
-vector<sockTb*> SS;
+
 int cid_ = 0;
-boost::mutex soctabmutex;
+
 FILE *_fptrace = fopen("../debug.txt", "w");
 
 

@@ -10,11 +10,16 @@
 #include <algorithm>
 #include "touControlBlock.h"
 
+//Ethernet 1500-20-24
+#ifndef TOU_MSS
+#define TOU_MSS				1456
+#endif
 /* TOU_SMSS should be exactly same as TOU_MSS */
-#define TOU_SMSS                100 
-#define TOU_RMSS                536
-#define TOU_MAX_SSTHRESH        1000	//1K
-#define TOU_MAX_CIRCULAR_BUF		40960	//40K
+#define TOU_SMSS			TOU_MSS
+#define TOU_RMSS			TOU_MSS
+#define TOU_MAX_SSTHRESH	65536
+/* TOU's circular buffer size: 40k */
+#define TOU_MAX_CIRCULAR_BUF	40960
 
 /* Congestion Control Window States */
 #define TOU_CC_ERR	0

@@ -28,11 +28,11 @@ class touCb {
       /*
        *  * Additional var for this implementation
        *   */
-      short		dupackcount;		//duplicate ack(should count to three)
+      short				dupackcount;			//duplicate ack(should count to three)
 
       u_long            snd_cwnd;               //congestion-controlled wnd
       u_long            snd_awnd;               //sender's advertised window from recver    
-      u_long            snd_ssthresh;   	//snd_cwnd size threshold for slow start
+      u_long            snd_ssthresh;   		//snd_cwnd size threshold for slow start
      //exponential to linear switch
 
 

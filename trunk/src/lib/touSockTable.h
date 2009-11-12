@@ -3,6 +3,7 @@
  *****************************************************/
  
  #include "touControlBlock.h"
+ #include "touCongestion.h"
  #include "circularbuffer.h"     //circular buffer
  
  /* SS is Socket Table for storing socket informaiton */
