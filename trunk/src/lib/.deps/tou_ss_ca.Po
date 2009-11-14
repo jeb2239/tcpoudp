@@ -1,5 +1,5 @@
-tou_ss_ca.o tou_ss_ca.o: tou_ss_ca.cpp toucong.h /usr/include/stdlib.h \
-  /usr/include/features.h /usr/include/sys/cdefs.h \
+tou_ss_ca.o tou_ss_ca.o: tou_ss_ca.cpp touCongestion.h \
+  /usr/include/stdlib.h /usr/include/features.h /usr/include/sys/cdefs.h \
   /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
   /usr/include/gnu/stubs-32.h \
   /usr/lib/gcc/i486-linux-gnu/4.2.4/include/stddef.h \
@@ -89,7 +89,7 @@ tou_ss_ca.o tou_ss_ca.o: tou_ss_ca.cpp toucong.h /usr/include/stdlib.h \
   /usr/include/c++/4.2/typeinfo /usr/include/c++/4.2/istream \
   /usr/include/c++/4.2/bits/istream.tcc touControlBlock.h
 
-toucong.h:
+touCongestion.h:
 
 /usr/include/stdlib.h:
 
