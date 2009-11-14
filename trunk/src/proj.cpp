@@ -120,7 +120,7 @@ struct hostent *h;
   //  while(1)
   {    
   		
-    if (select(sockd+1, &socks, NULL, NULL, &tim))
+    //if (select(sockd+1, &socks, NULL, NULL, &tim))
     {
     //TODO : Write logic for checking tou sockd here
       cout << "Inside ...... " << endl;

@@ -9,9 +9,8 @@ boost::mutex recvqmutex;
 
 void processTou::run(int sockfd) {
   sockMng	sockmng;
-  sockTb	socktb;
+	touMain tm;
   touPkg	tp;
-  touMain tm;
   timerMng timer;
   static int timerid;
   size_t len = sizeof(sockaddr_in);
@@ -34,10 +33,11 @@ void processTou::run(int sockfd) {
   /*
    * Check for ACK
    */
-  if(tp.t.ack == 1) {
+/*  if(tp.t.ack == 1) {
     tm1.delete_timer(sockfd,2,tp.t.seq);
   }
   
+	*/
   /*
    *check for data
    */
@@ -47,13 +47,13 @@ void processTou::run(int sockfd) {
   sockmng.setTCB(tp.t.seq,sockfd);                
   boost::mutex::scoped_lock lock(socktabmutex1);        
   int lenofbuf = strlen(tp.buf);
-  int lenofcb = socktb.CbRecvBuf.getSize();
+  int lenofcb = sockmng.s->CbRecvBuf.getSize();
   if(lenofbuf <= lenofcb) {
-    socktb.CbRecvBuf.insert(tp.buf, lenofbuf);
+    sockmng.s->CbRecvBuf.insert(tp.buf, lenofbuf);
   }
   else {
-      socktb.CbRecvBuf.insert(tp.buf, lenofcb);
-    }
+    sockmng.s->CbRecvBuf.insert(tp.buf, lenofcb);
+  }
     sockmng.setCbData(tp.buf,sockfd,lenofbuf);
     cout << " Leaving process tou " << endl;
     
@@ -73,7 +73,6 @@ void processTou::run(int sockfd) {
 
   if(tp.t.fin == 1) {
   cout<<"Closing Connection... " << endl;        
-  timer.add(tp.t.seq,timerid,5000,1000);
   boost::mutex::scoped_lock lock(socktabmutex1);
   tm.convertToByteOrder(tp);
   sockmng.setTCB(tp.t.seq,sockfd); 

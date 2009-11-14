@@ -75,6 +75,9 @@ extern std::vector<sockTb*> SS;
 
 class sockMng {
 		public :
+			sockMng() {
+				s = new sockTb();
+			}
 			struct sockTb* getSocketTable(int);
 			void setSocketTable(struct sockaddr_in *, int);
 			void setSocketTableD(struct sockaddr_in *, int); 
