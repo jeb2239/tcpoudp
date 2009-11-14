@@ -1,4 +1,5 @@
 /******************************************************
+ * tou.h
  * This is ToU library header file. User who wants to 
  * use ToU library functions hould include this header 
  * file once and only.
@@ -52,7 +53,7 @@ typedef unsigned char	u_char;
 #include <arpa/inet.h>
 #include <sstream>
 
-#include<vector>
+#include <vector>
 /***************************************************
  * Include from BOOST library
  **************************************************/
@@ -62,14 +63,13 @@ typedef unsigned char	u_char;
  **************************************************/
 #include "timer.h"				//tou timer library
 #include "trace.h"				//for debug
-#include "touHeader.h"			//tou header & header mng
-#include "touSockTable.h"
-#include "touCongestion.h"
+//#include "touHeader.h"			//tou header & header mng
+//#include "touSockTable.h"
+//#include "touCongestion.h"
 
 
 extern FILE *_fptrace;
-extern boost::mutex soctabmutex;
-extern vector<sockTb*> SS;
+extern timerMng tm1;
 
 /******************************************************
  * tou main class
@@ -86,7 +86,7 @@ class touMain {
 	int yes;
 	string touhstring;
 	char buf[50],buf1[50],buf3[50],buf4[50],buf5[50];
-	timerMng timermng;
+	//timerMng timermng;
 	sockMng sm;
 	//ioCongMng iocm;
 	//touheaderack thack;
@@ -97,13 +97,13 @@ class touMain {
 	int touAccept(int , struct sockaddr_in *, socklen_t * );
 	int touConnect(int , struct sockaddr_in *, int );
 	int touBind(int , struct sockaddr *, int );
-	int touListen();
+	int touListen(int, int);
 	int touSend(int , char *, int , int );
 	int touRecv(int , char *, int , int );
-	int touClose();
+	int touClose(int);
 	void convertToByteOrder(touPkg);
 	void convertFromByteOrder(touPkg);
 	int timero(int , int);
-	int assignaddr(struct sockaddr_in *, sa_family_t , char* , u_short);
+	int assignaddr(struct sockaddr_in *, sa_family_t , std::string , u_short);
 	
 };	

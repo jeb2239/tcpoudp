@@ -1,4 +1,5 @@
 /*********************************************************
+ * processtou.h
  * io management for receive
  * 
  * ******************************************************/
@@ -11,6 +12,7 @@
 #include <boost/timer.hpp>
 #include <boost/system/system_error.hpp>
 extern boost::mutex recvqmutex;
+extern boost::mutex socktabmutex1;
 
 class processTou {
   public:

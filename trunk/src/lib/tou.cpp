@@ -1,14 +1,11 @@
 #include "tou.h"
 #include "processtou.h"
+std::vector<sockTb*> SS;
+timerMng tm1;
 boost::mutex socktabmutex1;
-boost::mutex soctabmutex;
-vector<sockTb*> SS;
 
 FILE *_fptrace = fopen("../debug.txt", "w");
-
-
 using namespace std;
-
 /*
  *Byte stream functions
  *@result converts to byteorder	
@@ -138,11 +135,11 @@ int touMain::touAccept(int sd, struct sockaddr_in *socket2, socklen_t *addrlen) 
   
   sockTb *s;
   s = sm.getSocketTable(sd);
-  tp.t.seq = s->seqno;
+  tp.t.seq = s->tc.snd_nxt;
   u_short port = (s->dport);
   assignaddr(&sockaddrs,AF_INET,s->dip,port);
   if(s->sockstate == TOUS_SYN_RECEIVED) {  
-		boost::mutex::scoped_lock lock(soctabmutex);
+		boost::mutex::scoped_lock lock(socktabmutex1);
     //send syn ack
 	  if(lock)
     {
@@ -195,12 +192,12 @@ int touMain::touSend(int sd, char *sendBufer, int len1, int flags) {
   {
     s->CbSendBuf.insert(sendBufer,len1);
   }
-  u_long len2 = s.sc->getWnd();
+  u_long len2 = s->sc->getwnd();
   //do conversion from window size to bytes(len2)
   //sendto(sd,&tp,sizeof(tp),0,(struct sockaddr *)&sockaddrs,sizeof(sockaddr));
   memcpy(tp.buf,buf,len2);
   sendto(sd,&tp,sizeof(tp),0,(struct sockaddr *)&sockaddrs,sizeof(sockaddr));
-  tm.add(sd,2,tp.t.seq,s,tp.buf);
+  tm1.add(sd,2,tp.t.seq,s,tp.buf);
   //set seq no, set seq_next in toucb or socktable
   
     
@@ -227,11 +224,11 @@ s->CbRecvBuf.getAt(buffer,bufferLength,end);
 s->CbRecvBuf.remove(bufferLength);
  cout << "Received data " << buffer << endl;
 convertToByteOrder(tp);
-tp.t.seq = s->seqno;
-cout << "Seq no recv : " << s->seqno <<"   " <<  tp.t.seq << endl;
+tp.t.seq = s->tc.snd_nxt;
+cout << "Seq no recv : " << s->tc.snd_nxt <<"   " <<  tp.t.seq << endl;
 u_short port = (s->dport);
 assignaddr(&sockaddrs,AF_INET,s->dip,port);
-boost::mutex::scoped_lock lock(soctabmutex);
+boost::mutex::scoped_lock lock(socktabmutex1);
 //send syn ack
   if(lock)
   {
@@ -260,7 +257,7 @@ int touMain::touClose(int sd) {
   sockaddr_in sockaddrs,socket1;
   s = sm.getSocketTable(sd);
   size_t len = sizeof(sockaddr);
-  tp.t.seq = s->seqno;
+  tp.t.seq = s->tc.snd_nxt;
   u_short port = (s->dport);
   assignaddr(&sockaddrs,AF_INET,s->dip,port);
   if(s->sockstate == TOUS_CLOSE_WAIT) {
@@ -435,7 +432,7 @@ void sockMng::setSocketTable(struct sockaddr_in *sockettemp, int sd) {
       }
      }
      
-     s->seqno = seq;
+     s->tc.snd_nxt = seq;
      s->sockd = sd;
       SS.push_back(s);
     char *cstr = new char [(s->sip).size()+1];
@@ -462,7 +459,7 @@ void sockMng::setCbData(char *buf,int sd,int len) {
         s->sip = (*stbiter)->sip;
         s->dip = (*stbiter)->dip;
         s->sockstate = (*stbiter)->sockstate;
-        s->seqno = (*stbiter)->seqno;
+        s->tc.snd_nxt = (*stbiter)->tc.snd_nxt;
         SS.erase(stbiter);
         break;
       }

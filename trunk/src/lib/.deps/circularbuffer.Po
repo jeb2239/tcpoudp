@@ -1,4 +1,4 @@
-circularbuffer.o circularbuffer.o: circularbuffer.cpp circularbuffer.h \
+circularbuffer.o circularbuffer.o: circularbuffer.cpp circularBuffer.h \
   /usr/include/stdlib.h /usr/include/features.h /usr/include/sys/cdefs.h \
   /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
   /usr/include/gnu/stubs-32.h \
@@ -436,7 +436,7 @@ circularbuffer.o circularbuffer.o: circularbuffer.cpp circularbuffer.h \
   ../../boostlib/boost_1_40_0/boost/thread/pthread/shared_mutex.hpp \
   ../../boostlib/boost_1_40_0/boost/thread/barrier.hpp
 
-circularbuffer.h:
+circularBuffer.h:
 
 /usr/include/stdlib.h:
 

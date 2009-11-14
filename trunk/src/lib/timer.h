@@ -1,26 +1,22 @@
-/*************************************************************************
+/************************************************************************
  * Here configure the Project inclusions, definitions, and variables 
  *************************************************************************/
 #include "touSockTable.h"
+#include "touHeader.h"
 
 #include <iostream>
 #include <string.h>
 #include <unistd.h>
 #include <deque>
 #include <time.h>
+#include <string>
 #include <sys/time.h>
 #include <functional>
 #include <queue>
 #include <vector>
 
-#include <boost/asio.hpp>
-#include <boost/thread.hpp>
-//#include <boost/bimap.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/timer.hpp>
-//#include <boost/system/system_error.hpp>
 
 /* associate with sock file descriptor */
 typedef unsigned int conn_id;
@@ -45,7 +41,8 @@ class node_t {
 			:c_id(c), t_id(t), p_id(p), st(s) {
 			payload = new char[sizeof(*pl)];
 			strncpy(payload, pl, sizeof(*pl));
-		}
+			ms = getCurMs()+ s->tc.t_timeout;
+		};
 
     ~node_t(){ delete payload; };
 
@@ -63,9 +60,11 @@ class node_t {
 class heapComp {
   public:
     bool operator() (const node_t& lhs, const node_t& rhs) const {
-			return((lhs.c_id > rhs.c_id));
-    }else 
-			return (lhs.ms >= rhs.ms);
+		  if((lhs.ms==rhs.ms)) {
+		    return((lhs.c_id > rhs.c_id));
+		  }else{
+		    return (lhs.ms >= rhs.ms);
+		  }
     }
 };
 
@@ -85,7 +84,7 @@ class timerCk {
     ~timerCk(){
       std::cout << "*** timerCk recycled *** " << std::endl;
 
-			delete nt;
+			//delete nt;
       m_thread.join(); // RAII designed pattern, recycling self-managment
 		};
 
@@ -110,6 +109,8 @@ class timerCk {
   private:
     void doit();
     node_t *nt;
+	  struct sockaddr_in sockaddrs;
+		int assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_family, std::string ip, unsigned short port);
 
 		/* timer deletion queue, node in here needs to be used as registered node to
 		 * revoke the node in priority_queue while timer node in priority_queue is fired */
@@ -118,16 +119,16 @@ class timerCk {
 
 		/* timer thread */
     boost::thread m_thread;
-		boost::asio::io_service io;
-		boost::asio::deadline_timer t(io, boost::posix_time::milliseconds(500));
+//		boost::asio::io_service io;
+//		boost::asio::deadline_timer t(io, boost::posix_time::milliseconds(500));
 };
 
 class timerMng {
   public:
     timerMng();
     ~timerMng(){ delete timercker; };
-    bool add(conn_id cid, time_id tid, long ms, seq_id pid);
-    bool add(conn_id cid, time_id tid, seq_id pid, sockTb *st, char *payload, long ms);
+    bool add(conn_id cid, time_id tid, seq_id pid, long ms);
+    bool add(conn_id cid, time_id tid, seq_id pid, sockTb *st, char *payload);
     bool delete_timer(conn_id cid, time_id tid, seq_id pid);
     bool reset(conn_id cid, time_id tid, seq_id pid);
     bool reset(conn_id cid, time_id tid, long ms, seq_id pid);

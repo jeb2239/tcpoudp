@@ -2,7 +2,7 @@
  * Slow start algorithm and Congestion control algorithm
  * C, Lee, Oct 18, 2009
  * **********************************************************/
-#include "toucong.h"
+#include "touCongestion.h"
 
 
 ssca::ssca(touCb *ptb):tb(ptb) {
