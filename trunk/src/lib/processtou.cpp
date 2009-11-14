@@ -35,7 +35,7 @@ void processTou::run(int sockfd) {
    * Check for ACK
    */
   if(tp.t.ack == 1) {
-    tm.del(sd,2);
+    tm.delete_timer(sd,2,tp.t.seq);
   }
   
   /*
