@@ -7,6 +7,7 @@ class touCb {
       short             t_state;                //11 connection states
       short		cc_state;		  //3 congestion states
       short             t_timer[TOUT_TIMERS];   //4 timers
+			unsigned long			t_timeout;							//current timeout(ms)
       u_short           t_flags;                //pending
   /*
    *  * WND & SEQ control. See RFC 783
@@ -16,7 +17,7 @@ class touCb {
       u_long            snd_una;                //send # unacked
       u_long            snd_nxt;                //send # next
 
-      u_long			snd_ack;				//send's ack #
+      u_long						snd_ack;								//send's ack #
 
       u_long            snd_w11;                //send wnd update seg seq #
       u_long            snd_w12;                //send wnd update seg ack #

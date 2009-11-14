@@ -13,9 +13,9 @@
 class sockTb {
   public:
     touCb	tc;			//tcp control block
-    int		sockd;		//socket file descriptor
-	int     sockstate;  //SOCK_CREATED, BIND, LISTEN, CONNECT, ESTABLISHED, TERMINATING
-    u_short sport;
+    int			sockd;		//socket file descriptor
+		int			sockstate;  //SOCK_CREATED, BIND, LISTEN, CONNECT, ESTABLISHED, TERMINATING
+    u_short	sport;
     u_short dport;      //destination port
     string  sip;
     string  dip;        //destination ip 
