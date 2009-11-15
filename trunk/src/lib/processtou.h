@@ -17,6 +17,15 @@ extern boost::mutex socktabmutex1;
 
 class processTou {
   public:
+<<<<<<< .mine
+    processTou() {
+			std::cerr<< "Should not call processTou without arguments!\n";
+		}
+    processTou(int sd){
+			std::cout<< "*** processTou(int sd) is running now ***\n";
+      run(sd);
+      sockfd = sd;
+=======
     processTou() {
 			std::cerr<< "Should not call processTou without arguments!\n";
 		}
@@ -25,7 +34,18 @@ class processTou {
       sockfd = sd;      
       run(sockfd);
       
+>>>>>>> .r75
     }
+<<<<<<< .mine
+		processTou(int sd, sockMng *sockmng){
+			std::cout<< "*** processTou(int sd, sockMng *sm) is running now ***\n";
+			sockfd = sd;
+			sm = sockmng;
+		}
+    ~processTou(){ 
+			 std::cout << "*** processTou is recycled *** " << std::endl;
+		}
+=======
 		processTou(int sd, sockMng *sockmng){
 			std::cout<< "*** processTou(int sd, sockMng *sm) is running now ***\n";
 			sockfd = sd;
@@ -35,15 +55,35 @@ class processTou {
     ~processTou(){ 
 			 std::cout << "*** processTou is recycled *** " << std::endl;
 		}
+>>>>>>> .r75
 
+<<<<<<< .mine
+
+=======
     void run(int );
+>>>>>>> .r75
   private:
+<<<<<<< .mine
+    int										sockfd;
+		sockMng								*sm
+	  sockTb								*socktb;
+    struct sockaddr_in		sockaddr;
+    
+    void run(int );
+=======
     int										sockfd;
 		sockMng								*sm;
 	  sockTb								*socktb;
     struct sockaddr_in		sockaddr;
+>>>>>>> .r75
 
+<<<<<<< .mine
+		void send(int sockfd);
+		int popsndq(sockTb *socktb, char *sendbuf, int len);
+		int assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_family, string ip, unsigned short port);
+=======
 		void send(int sockfd);
 		int popsndq(sockTb *socktb, char *sendbuf, int len);
 		int assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_family, std::string ip, unsigned short port);
+>>>>>>> .r75
 };

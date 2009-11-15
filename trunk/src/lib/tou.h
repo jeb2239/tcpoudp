@@ -78,16 +78,36 @@ extern timerMng tm1;
  * ***************************************************/
 class touMain {
 	private:
+<<<<<<< .mine
+	unsigned long test;
+	touPkg tp;
+	int sd;
+	int sd2;
+	int yes;
+	string touhstring;
+	char buf[50],buf1[50],buf3[50],buf4[50],buf5[50];
+
+	sockMng sm;				/* TOU socket table management */
+	processTou *ptou;	/* process TOU*/
+
+  /* for sending: pushing data into circular buf */
+	int pushsndq(int sockfd, char *sendbuf, int &len);
+=======
   int sd;
   int yes;
   /* for sending: pushing data into circular buf */
 	int pushsndq(int sockfd, char *sendbuf, int &len);
+>>>>>>> .r75
 	
+<<<<<<< .mine
+	public :
+=======
 	public:
   touPkg tp;
 	/* TOU socket table management */
   sockMng sm;
   processTou *ptou;	/* process TOU*/	
+>>>>>>> .r75
 	int touSocket(int , int , int );
 	int touAccept(int , struct sockaddr_in *, socklen_t * );
 	int touConnect(int , struct sockaddr_in *, int );
@@ -96,11 +116,19 @@ class touMain {
 	int touSend(int , char *, int , int );
 	int touRecv(int , char *, int , int );
 	int touClose(int);
+<<<<<<< .mine
+	
+	int processTou(int sockfd) {
+		processTou ptou = new processTou(sockfd, &sm);
+	}
+
+=======
 	
 	int proTou(int sockfd) {
 	ptou = new processTou(sockfd, &sm);
 	}
 
+>>>>>>> .r75
 	void convertToByteOrder(touPkg);
 	void convertFromByteOrder(touPkg);
 	int timero(int , int);

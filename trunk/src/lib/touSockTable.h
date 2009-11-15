@@ -3,6 +3,19 @@
  * This is ToU socket table & its talbe management
  *****************************************************/
  
+//Status
+#define TOUS_CLOSED     0
+#define TOUS_LISTEN     1
+#define TOUS_SYN_SENT   2
+#define TOUS_SYN_RECEIVED 3
+#define TOUS_ESTABLISHED  4
+#define TOUS_CLOSE_WAIT   5
+#define TOUS_FIN_WAIT_1   6
+#define TOUS_CLOSING    7
+#define TOUS_LAST_ACK   8
+#define TOUS_FIN_WAIT_2   9
+#define TOUS_TIME_WAIT    10
+
 #include <iostream>
 #include <string>
 #include <vector>

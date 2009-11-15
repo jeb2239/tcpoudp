@@ -175,6 +175,9 @@ int touMain::touAccept(int sd, struct sockaddr_in *socket2, socklen_t *addrlen) 
  * Send()
  * @result return no of bytes successfully sent  
  */
+<<<<<<< .mine
+/*
+=======
 int touMain::touSend(int sd, char *sendBufer, int len1, int flags) { 
 	std::cout << "INSIDE touSend function ..... " << endl;
 	int len = len1; //length of sendBufer
@@ -186,6 +189,7 @@ int touMain::touSend(int sd, char *sendBufer, int len1, int flags) {
 
 
 /*
+>>>>>>> .r75
 int touMain::touSend(int sd, char *sendBufer, int len1, int flags) {
   sockTb *s;
   cout << "INSIDE SEND ..... " << endl;
@@ -224,11 +228,21 @@ int touMain::touSend(int sd, char *sendBufer, int len1, int flags) {
   
     
 }
+*/
+int touMain::touSend(int sd, char *sendBufer, int len1, int flags) { 
+	std::cout << "INSIDE touSend function ..... " << endl;
+	int len = len1; //length of sendBufer
+	return pushsndq(sd , sendBufer, int &len)
+	std::cout << "LEAVE touSend function, data push into circular buff\n";
+}
 
 */
 
+<<<<<<< .mine
+=======
 
 
+>>>>>>> .r75
 /* 
  * Receive()
  * @result return no of bytes successfully received  
@@ -502,9 +516,24 @@ int sockMng::setCbData(char *buf,int sd,int len) {
   sockTb *socktb;
   socktb = sm.getSocketTable(sockfd);
 
+<<<<<<< .mine
+int touMain::pushsndq(int sockfd, char *sendbuf, int &len) {
+	// boost::mutex::scoped_lock lock(sndqmutex);
+  int an = 0; //actual number of bytes been sent
+  socktb = sm.getSocketTable(sockfd);
+
+  /* insert the data into circular buf */
+  if( 0 < socktb->CbSendBuf.getAvSize()){
+    an = socktb->CbSendBuf.insert(sendbuf, len);
+  }
+  return an;
+}
+
+=======
   /* insert the data into circular buf */
   if( 0 < socktb->CbSendBuf.getAvSize()){
     an = sm.setCbData(sendbuf,sockfd, len);
   }
   return an;
 }
+>>>>>>> .r75

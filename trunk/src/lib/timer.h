@@ -52,7 +52,12 @@ class node_t {
 			ms = getCurMs() + s->tc.t_timeout;
 		};
 
+<<<<<<< .mine
+    ~node_t(){ //delete payload; 
+		};
+=======
     ~node_t(){ /*delete payload;*/ };
+>>>>>>> .r75
 
     conn_id	c_id;
     time_id	t_id;
