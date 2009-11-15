@@ -1,4 +1,5 @@
 /************************************************************************
+ * timer.h
  * Here configure the Project inclusions, definitions, and variables 
  *************************************************************************/
 #include "touSockTable.h"
@@ -7,16 +8,19 @@
 #include <iostream>
 #include <string.h>
 #include <unistd.h>
-#include <deque>
 #include <time.h>
 #include <string>
 #include <sys/time.h>
 #include <functional>
 #include <queue>
+#include <deque>
 #include <vector>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/timer.hpp>
+
+/* time that timer would wait for each cking */
+#define TIMER_WT	500
 
 /* associate with sock file descriptor */
 typedef unsigned int conn_id;
@@ -32,16 +36,19 @@ long getCurMs();
  * the data and seq are sotred in this node too */
 class node_t {
   public:
-    node_t(){};
+    node_t(){
+		  std::cerr<<"shouldn't use  node_t()";
+		};
     node_t(conn_id c, time_id t,seq_id p)
       :c_id(c), t_id(t), p_id(p) {};
     node_t(conn_id c, time_id t, seq_id p, long m)
-      :c_id(c), t_id(t), p_id(p), ms(m) {};
+      :c_id(c), t_id(t), p_id(p), ms(m) {
+			std::cerr<<"shouldn't use  node_t with specifying ms";};
 		node_t(conn_id c, time_id t, seq_id p, sockTb *s, char *pl)
 			:c_id(c), t_id(t), p_id(p), st(s) {
 			payload = new char[sizeof(*pl)];
 			strncpy(payload, pl, sizeof(*pl));
-			ms = getCurMs()+ s->tc.t_timeout;
+			ms = getCurMs() + s->tc.t_timeout;
 		};
 
     ~node_t(){ delete payload; };
@@ -119,8 +126,6 @@ class timerCk {
 
 		/* timer thread */
     boost::thread m_thread;
-//		boost::asio::io_service io;
-//		boost::asio::deadline_timer t(io, boost::posix_time::milliseconds(500));
 };
 
 class timerMng {

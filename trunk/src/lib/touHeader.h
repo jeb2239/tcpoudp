@@ -3,6 +3,9 @@
  **************************************************/
 #define TOU_MSS				1456
 #define TOU_MAX				TOU_MSS
+#define FLAGON  1
+#define FLAGOFF 0
+
 
 /***************************************************
  * TOU HEADER

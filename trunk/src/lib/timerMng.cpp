@@ -2,8 +2,6 @@
 /* STL, Priority_queue(min-heap) 
  * for storing all pkt's timer */
 minTmHeapType timerheap;
-
-// Delx XxxXX: timerDequeType timerdeque;
 boost::mutex timermutex;
 
 /*********************************************
@@ -27,12 +25,12 @@ timerMng::timerMng(){
  * 3. payload, char* int, seq#, 
  ********************************************/
 bool timerMng::add(conn_id cid, time_id tid, seq_id pid, long ms){
-  //boost::mutex::scoped_lock lock(timermutex);
+  boost::mutex::scoped_lock lock(timermutex);
   timernode = new node_t(cid, tid, pid, getCurMs()+ms);  
   timerheap.push(*timernode);
 }
 bool timerMng::add(conn_id cid, time_id tid, seq_id pid, sockTb *st, char *payload){
-	//boost::mutex::scoped_lock lock(timermutex);
+	boost::mutex::scoped_lock lock(timermutex);
 	timernode = new node_t(cid, tid, pid, st, payload);
 	timerheap.push(*timernode);
 	
