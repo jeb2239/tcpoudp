@@ -46,12 +46,13 @@ class node_t {
 			std::cerr<<"shouldn't use  node_t with specifying ms";};
 		node_t(conn_id c, time_id t, seq_id p, sockTb *s, char *pl)
 			:c_id(c), t_id(t), p_id(p), st(s) {
-			payload = new char[sizeof(*pl)];
-			strncpy(payload, pl, sizeof(*pl));
+			payload = new char[strlen(pl)];
+      std::cout << "sizeof pl : " << strlen(pl) <<std::endl;
+			strncpy(payload, pl, strlen(pl));
 			ms = getCurMs() + s->tc.t_timeout;
 		};
 
-    ~node_t(){ delete payload; };
+    ~node_t(){ /*delete payload;*/ };
 
     conn_id	c_id;
     time_id	t_id;
@@ -131,7 +132,7 @@ class timerCk {
 class timerMng {
   public:
     timerMng();
-    ~timerMng(){ delete timercker; };
+    ~timerMng(){ /*delete timercker;*/ };
     bool add(conn_id cid, time_id tid, seq_id pid, long ms);
     bool add(conn_id cid, time_id tid, seq_id pid, sockTb *st, char *payload);
     bool delete_timer(conn_id cid, time_id tid, seq_id pid);

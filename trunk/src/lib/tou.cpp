@@ -1,5 +1,5 @@
 #include "tou.h"
-#include "processtou.h"
+//#include "processtou.h"
 std::vector<sockTb*> SS;
 timerMng tm1;
 boost::mutex socktabmutex1;
@@ -70,7 +70,9 @@ int touMain::touBind(int sockfd, struct sockaddr *my_addr, int addrlen) {
  */
 	 
 int touMain::touListen(int sd, int backlog) {
-  s.sockstate = TOUS_LISTEN;
+  sockTb *s;
+  s=sm.getSocketTable(sd);
+  sm.setSocketState(TOUS_LISTEN,sd);
     
 }
 	
@@ -80,6 +82,7 @@ int touMain::touListen(int sd, int backlog) {
  */
 	
 int touMain::touConnect(int sd, struct sockaddr_in *socket1, int addrlen) {
+  cout << " Inside Connect " << endl;
 	int rv;
   sm.setSocketTableD(socket1,sd);		
 	tp.t.seq = rand()%(u_long)65535;
@@ -105,7 +108,7 @@ int touMain::touConnect(int sd, struct sockaddr_in *socket1, int addrlen) {
 		else {
  			cout <<"SYNACK not received !! "<< endl;
       count++;
-      if (count > 5) close(sd);
+      if (count > 5) {close(sd); return 0;}
 		}
 	}
 
@@ -129,7 +132,8 @@ int touMain::touConnect(int sd, struct sockaddr_in *socket1, int addrlen) {
  */
 
 int touMain::touAccept(int sd, struct sockaddr_in *socket2, socklen_t *addrlen) {
-	int rv, control=0, flagforsyn = 1;
+  cout << " Inside Accept " << endl;	
+  int rv, control=0, flagforsyn = 1;
   size_t len = sizeof(sockaddr);
   struct sockaddr_in sockaddrs;
   
@@ -171,39 +175,57 @@ int touMain::touAccept(int sd, struct sockaddr_in *socket2, socklen_t *addrlen) 
  * Send()
  * @result return no of bytes successfully sent  
  */
+int touMain::touSend(int sd, char *sendBufer, int len1, int flags) { 
+	std::cout << "INSIDE touSend function ..... " << endl;
+	int len = len1; //length of sendBufer
+	int lenr = pushsndq(sd , sendBufer,  len);
+  
+	std::cout << "LEAVE touSend function, data push into circular buff\n";\
+  return lenr;
+}
 
+
+/*
 int touMain::touSend(int sd, char *sendBufer, int len1, int flags) {
   sockTb *s;
+  cout << "INSIDE SEND ..... " << endl;
+  char *buf = new char[len1];
   s = sm.getSocketTable(sd);
   u_short port = (s->dport);
   int rv, control=0, flagforsyn = 1;
   size_t len = sizeof(sockaddr);
   struct sockaddr_in sockaddrs,socket1;
-  memset(tp.buf, 0, TOU_MSS);
   tp.t.syn = 0;
   assignaddr(&sockaddrs,AF_INET,s->dip,port);
   //memcpy(tp.buf,sendBufer,len1);
   memcpy(buf,sendBufer,len1);
+
+ cout << "data to be sent :  " << buf << endl;
+  memset(tp.buf, 0, TOU_MAX);
   tp.t.seq = tp.t.seq + 1;
   cout << "Sequence Number : " << tp.t.seq << endl; 
   convertToByteOrder(tp); 
-  int sizeavail = s->CbSendBuf.getSize();
-  if(sizeavail > len1)
+  //int sizeavail = s->CbSendBuf.getSize();
+  /*if(sizeavail > len1)
   {
     s->CbSendBuf.insert(sendBufer,len1);
-  }
-  u_long len2 = s->sc->getwnd();
+  }*/
+ // u_long len2 = s->sc->getwnd();
   //do conversion from window size to bytes(len2)
   //sendto(sd,&tp,sizeof(tp),0,(struct sockaddr *)&sockaddrs,sizeof(sockaddr));
-  memcpy(tp.buf,buf,len2);
+ /* cout << "MEMCPY !!! << " << endl;  
+  memcpy(tp.buf,buf,len1);
+  cout << "ABT to send : " <<tp.buf << endl;
   sendto(sd,&tp,sizeof(tp),0,(struct sockaddr *)&sockaddrs,sizeof(sockaddr));
+  cout << "DATA sent " << endl;  
   tm1.add(sd,2,tp.t.seq,s,tp.buf);
-  //set seq no, set seq_next in toucb or socktable
+   
+   //set seq no, set seq_next in toucb or socktable
   
     
 }
 
-
+*/
 
 
 
@@ -233,8 +255,9 @@ boost::mutex::scoped_lock lock(socktabmutex1);
   if(lock)
   {
     tp.t.ack_seq = tp.t.seq + strlen(buffer);
-	  tp.t.seq = rand()%(u_long)65530;
-  	tp.t.syn = 0;
+	//  tp.t.seq = rand()%(u_long)65530;
+    tp.t.seq = tp.t.seq;  	
+    tp.t.syn = 0;
 	  tp.t.ack = 1;
   	convertToByteOrder(tp);
    		
@@ -252,7 +275,7 @@ boost::mutex::scoped_lock lock(socktabmutex1);
  */
 
 int touMain::touClose(int sd) {
-		
+		cout << " Inside close  " << endl;
   sockTb *s;
   sockaddr_in sockaddrs,socket1;
   s = sm.getSocketTable(sd);
@@ -261,6 +284,7 @@ int touMain::touClose(int sd) {
   u_short port = (s->dport);
   assignaddr(&sockaddrs,AF_INET,s->dip,port);
   if(s->sockstate == TOUS_CLOSE_WAIT) {
+  cout << "Sending finack " << endl;
    tp.t.fin = 1;
    tp.t.ack = 1;
    int rv = sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr*)&sockaddrs , sizeof(struct sockaddr_in));   
@@ -270,6 +294,7 @@ int touMain::touClose(int sd) {
  }
    tp.t.fin = 1;
    tp.t.ack_seq = tp.t.seq + 1;
+   cout << "sending fin " << endl;
 	 int rv = sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr*)&sockaddrs , sizeof(struct sockaddr_in));
    recvfrom(sd,&tp,sizeof(tp),0,(struct sockaddr *)&socket1,&len);
    if(tp.t.fin ==1 && tp.t.ack ==1) {
@@ -447,8 +472,9 @@ void sockMng::setSocketTable(struct sockaddr_in *sockettemp, int sd) {
     delete[] cstr1;		
 }
 
-void sockMng::setCbData(char *buf,int sd,int len) {
- boost::mutex::scoped_lock lock(soctabmutex);      
+int sockMng::setCbData(char *buf,int sd,int len) {
+ boost::mutex::scoped_lock lock(soctabmutex);    
+ int len1 = len;  
  s = new sockTb;
  for(stbiter=SS.begin(); stbiter!=SS.end(); stbiter++)
 	  {
@@ -464,9 +490,21 @@ void sockMng::setCbData(char *buf,int sd,int len) {
         break;
       }
      }
-  s->CbRecvBuf.insert(buf,len);
+  len1 = s->CbRecvBuf.insert(buf,len);
   s->sockd = sd;
+  SS.push_back(s);  
+  return len1;
   
-  SS.push_back(s);
 }  
+int touMain::pushsndq(int sockfd, char *sendbuf, int &len) {
+	// boost::mutex::scoped_lock lock(sndqmutex);
+  int an = 0; //actual number of bytes been sent
+  sockTb *socktb;
+  socktb = sm.getSocketTable(sockfd);
 
+  /* insert the data into circular buf */
+  if( 0 < socktb->CbSendBuf.getAvSize()){
+    an = sm.setCbData(sendbuf,sockfd, len);
+  }
+  return an;
+}

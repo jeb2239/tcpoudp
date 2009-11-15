@@ -2,7 +2,7 @@
  * This is header file.
  **************************************************/
 #define TOU_MSS				1456
-#define TOU_MAX				TOU_MSS
+#define TOU_MAX				1456
 #define FLAGON  1
 #define FLAGOFF 0
 
@@ -40,12 +40,12 @@ class touHeader {
 class touPkg {
 	public:
 		touHeader	t;
-		char		*buf;
+		char		buf[TOU_MSS];
 
 		/* default constructor would new a pkg with TOU_MAX */
-		touPkg(){ buf = new char[TOU_MAX]; }
+		/*touPkg(){ buf = new char[TOU_MAX]; }
 		/* specified what size you want assign to payload */
-		touPkg(int payloadsize) { buf = new char[payloadsize]; }
+		//touPkg(int payloadsize) { buf = new char[payloadsize]; }
 		
 		/* recycle the buf */
 		~touPkg(){//delete buf;

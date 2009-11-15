@@ -11,10 +11,10 @@ void timerCk::doit(){
       if( !ckTimerDel(timerheap.top().c_id, timerheap.top().t_id, timerheap.top().p_id)){
 				//not in the del vector, so this fire node needs to be handled.
 				//rexmitting this pkt, and reset the timer again.
-				touPkg toupkt(sizeof(*(timerheap.top().payload)));
+				touPkg toupkt;//(sizeof(*(timerheap.top().payload)));
 				toupkt.putHeaderSeq(timerheap.top().p_id, timerheap.top().st->tc.snd_ack);
 				toupkt.t.ack = FLAGON;
-				strncpy(toupkt.buf, timerheap.top().payload, sizeof(*(timerheap.top().payload)));
+				strncpy(toupkt.buf, timerheap.top().payload, strlen(timerheap.top().payload));
 
 				assignaddr(&sockaddrs, AF_INET, timerheap.top().st->dip, timerheap.top().st->dport);
 				//sending...
@@ -25,7 +25,8 @@ void timerCk::doit(){
 				timerheap.push(*nt);
 
 				/* for test */
-				std::cout<< "Timer not in delqueue and fired c_id:"<<timerheap.top().c_id <<" "<< timerheap.top().p_id <<" timer id : " <<timerheap.top().t_id << " fired."<< "CurTime: "<<getCurMs()<<"; Timer: "<<timerheap.top().ms<<std::endl;
+        
+				std::cout<< "Timer not in delqueue and fired c_id:"<<timerheap.top().c_id <<" "<< timerheap.top().p_id <<" timer id : " <<timerheap.top().t_id << " fired."<< "CurTime: "<<getCurMs()<<"; Timer: "<<timerheap.top().ms<<"Buffer : " << toupkt.buf <<std::endl;
       }	
       timerheap.pop();
     }else{

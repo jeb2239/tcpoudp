@@ -62,7 +62,9 @@ typedef unsigned char	u_char;
  * Include from self-define header
  **************************************************/
 #include "timer.h"				//tou timer library
+#include "processtou.h"
 #include "trace.h"				//for debug
+
 //#include "touHeader.h"			//tou header & header mng
 //#include "touSockTable.h"
 //#include "touCongestion.h"
@@ -75,24 +77,17 @@ extern timerMng tm1;
  * tou main class
  * ***************************************************/
 class touMain {
-
 	private:
-		
-	unsigned long test;
-	touPkg tp;
-	sockTb s, *s1;
-	int sd;
-	int sd2;
-	int yes;
-	string touhstring;
-	char buf[50],buf1[50],buf3[50],buf4[50],buf5[50];
-	//timerMng timermng;
-	sockMng sm;
-	//ioCongMng iocm;
-	//touheaderack thack;
+  int sd;
+  int yes;
+  /* for sending: pushing data into circular buf */
+	int pushsndq(int sockfd, char *sendbuf, int &len);
 	
-	public :
-	
+	public:
+  touPkg tp;
+	/* TOU socket table management */
+  sockMng sm;
+  processTou *ptou;	/* process TOU*/	
 	int touSocket(int , int , int );
 	int touAccept(int , struct sockaddr_in *, socklen_t * );
 	int touConnect(int , struct sockaddr_in *, int );
@@ -101,6 +96,11 @@ class touMain {
 	int touSend(int , char *, int , int );
 	int touRecv(int , char *, int , int );
 	int touClose(int);
+	
+	int proTou(int sockfd) {
+	ptou = new processTou(sockfd, &sm);
+	}
+
 	void convertToByteOrder(touPkg);
 	void convertFromByteOrder(touPkg);
 	int timero(int , int);

@@ -1,5 +1,5 @@
 #include "tou.h"
-#include "processtou.h"	
+//#include "processtou.h"	
 	
 
 int main(int argc, char* argv[])
@@ -60,9 +60,12 @@ struct hostent *h;
   {
 	cout<< "Enter data to be sent : " << endl;
 	gets(send_data);
-  //cout << " Data acquired now sending ...  "<<send_data <<"   "<< strlen(send_data) << endl;
+  cout << " Data acquired now sending ...  "<<send_data <<"   "<< strlen(send_data) << endl;
     	if (strcmp(send_data , "q") != 0 && strcmp(send_data , "Q") != 0)
-           tm.touSend(sockd,send_data,strlen(send_data),0); 
+       {
+          tm.touSend(sockd,send_data,strlen(send_data),0); 
+             processTou *p = new processTou(sockd);
+      }
 		else
   		{
 		 	tm.touSend(sd,send_data,strlen(send_data),0);
@@ -71,6 +74,8 @@ struct hostent *h;
    		}
   //cout << "done with the sending wait for close " << endl;
 	} 
+  cout << " Just b4 close " << endl;
+  sleep(5);
  	tm.touClose(sockd);
 	
   //*/
@@ -124,21 +129,22 @@ struct hostent *h;
     {
     //TODO : Write logic for checking tou sockd here
       cout << "Inside ...... " << endl;
-      processTou *p = new processTou(sockd);
+      tm.proTou(sd);
     }
   }      
-     //processTou *p = new processTou(sockd);
+        cout <<"b4 accept:"<<endl;     
+    //processTou *p = new processTou(sockd);
 		socklen_t sinlen = sizeof(socket2);
 		sd = tm.touAccept(sockd,(struct sockaddr_in*)&socket2,&sinlen);
 	
    cout << " And now for the receiving part " << endl;
  // while(1)
   {    
-  if (select(sockd+1, &socks, NULL, NULL, &tim))
+ // if (select(sockd+1, &socks, NULL, NULL, &tim))
     {
     //TODO : Write logic for checking tou sockd here
       cout << "Inside 2 ...... " << endl;
-      processTou *p = new processTou(sockd);
+      tm.proTou(sd);
     }
    }      
    // processTou *p = new processTou(sockd);
@@ -149,11 +155,12 @@ struct hostent *h;
    //if (select(sockd+1, &socks, NULL, NULL, &tim))
     {
     //TODO : Write logic for checking tou sockd here
-  //    cout << "Inside 3...... " << endl;
-      processTou *p = new processTou(sockd);
+     cout << "Inside 3...... " << endl;
+     tm.proTou(sd);
     }      
    //processTou *p = new processTou(sockd);
- 	 tm.touClose(sockd);
+  cout<< " Inside 3..." <<endl; 	 
+  tm.touClose(sockd);
 	
 	return 0; 
 

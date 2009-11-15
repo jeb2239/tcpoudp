@@ -85,7 +85,7 @@ class sockMng {
 			void delSocketTable(int );
 			void setSocketState(int , int);
 			void setTCB(long unsigned int, int);
-			void setCbData(char *, int, int);
+			int setCbData(char *, int, int);
 			sockTb *s;
 		private:
 			std::vector<sockTb*>::iterator stbiter;

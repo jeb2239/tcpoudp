@@ -11,37 +11,39 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/timer.hpp>
 #include <boost/system/system_error.hpp>
+#include <string>
 extern boost::mutex recvqmutex;
 extern boost::mutex socktabmutex1;
 
 class processTou {
   public:
-    processTou(int sd)
-    {
-      run(sd);
-//      std::cout<< "*** process tou recv is running now ***\n";
-      sockfd = sd;
+    processTou() {
+			std::cerr<< "Should not call processTou without arguments!\n";
+		}
+    processTou(int sd){
+			std::cout<< "*** processTou(int sd) is running now ***\n";
+      sockfd = sd;      
+      run(sockfd);
+      
     }
-    ~processTou(){
-//      std::cout << "*** process tou recv is recycled *** " << std::endl;
-    }
+		processTou(int sd, sockMng *sockmng){
+			std::cout<< "*** processTou(int sd, sockMng *sm) is running now ***\n";
+			sockfd = sd;
+			sm = sockmng;
+      run(sockfd);
+		}
+    ~processTou(){ 
+			 std::cout << "*** processTou is recycled *** " << std::endl;
+		}
 
-    //void pushsndq(touheaderack *touack);
-    //pushrecvq(touheaderack *touack);
-
-  private:
-    //std::queue<struct touheaderack>		sndq;
-    //std::queue<struct touheaderack>		iterator;
-    int						sockfd;
-    //touheaderack			 	touhdack;	
-    struct sockaddr_in				sockaddr;
-    
-    /* error return: 0
-     * success return: 1 */
-    //int assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_family, char *ip, char *port); /* get the sockaddr_in infomation */
-    //void popsndq(tou);
     void run(int );
-    
+  private:
+    int										sockfd;
+		sockMng								*sm;
+	  sockTb								*socktb;
+    struct sockaddr_in		sockaddr;
 
-
+		void send(int sockfd);
+		int popsndq(sockTb *socktb, char *sendbuf, int len);
+		int assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_family, std::string ip, unsigned short port);
 };
