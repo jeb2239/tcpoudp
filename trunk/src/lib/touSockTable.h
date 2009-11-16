@@ -74,9 +74,7 @@ extern std::vector<sockTb*> SS;
 
 class sockMng {
 		public :
-			sockMng() {
-				s = new sockTb();
-			}
+			sockMng() {s = new sockTb();}
 			struct sockTb* getSocketTable(int);
 			void setSocketTable(struct sockaddr_in *, int);
 			void setSocketTableD(struct sockaddr_in *, int); 
@@ -84,11 +82,12 @@ class sockMng {
 			void delSocketTable(int );
 			void setSocketState(int , int);
 			void setTCB(unsigned long ,unsigned long ,  int);
-			void setTCBWnd(unsigned long, int);
+			void setTCBCwnd(unsigned long, int);
+			void setTCBAwnd(unsigned long, int);
 
 
 			int setCbData(char *, int, int);
-			sockTb *s;
+			sockTb *s; /* this s should be private ???? this is just temp socktb ????????? should use function to access this s */
 		private:
 			std::vector<sockTb*>::iterator stbiter;
 			boost::mutex soctabmutex;
