@@ -89,7 +89,9 @@ int touMain::touConnect(int sd, struct sockaddr_in *socket1, int addrlen) {
   tp.t.syn = 1;
 	sm.setTCB(tp.t.seq, tp.t.seq,sd);
 	/* set the window size */
-	sm.setTCBWnd(2024, sd);
+	sm.setTCBCwnd(2024, sd);
+	sm.setTCBAwnd(2024, sd);
+
   //TRACE(5,"Seq no while sending : %lu " , tp.t.seq);
 	sockaddr_in sockaddrs;
   convertToByteOrder(tp);
@@ -410,13 +412,11 @@ void sockMng::setSocketTable(struct sockaddr_in *sockettemp, int sd) {
 	 /* return socktable ptr if matchs with sockfd 
 	  * return NULL if failure */
   struct sockTb* sockMng::getSocketTable(int sockfd) {
-	  boost::mutex::scoped_lock lock(soctabmutex);      
-    sockTb	*s;
-	 	for(stbiter=SS.begin(); stbiter!=SS.end(); stbiter++)
-	        {
+	  //boost::mutex::scoped_lock lock(soctabmutex);      
+	 	for(stbiter=SS.begin(); stbiter!=SS.end(); stbiter++){
 		  if((*stbiter)->sockd == sockfd)
 		    return (*stbiter);
-	   	}
+	  }
 		return NULL;
 	 }
 
@@ -440,63 +440,56 @@ void sockMng::setSocketTable(struct sockaddr_in *sockettemp, int sd) {
       SS.push_back(s);
 } 
 
-  void sockMng::setTCB(u_long seq, u_long seq1, int sd) {
-     boost::mutex::scoped_lock lock(soctabmutex);      
-    s = new sockTb;
-    for(stbiter=SS.begin(); stbiter!=SS.end(); stbiter++)
-	  {
-		  if((*stbiter)->sockd == sd)
-      {
-        s->sport = (*stbiter)->sport; 
-        s->dport = (*stbiter)->dport; 
-        s->sip = (*stbiter)->sip;
-        s->dip = (*stbiter)->dip;
-        s->sockstate = (*stbiter)->sockstate;
-        SS.erase(stbiter);
-        break;
-      }
-     }
-     
-     s->tc.snd_nxt = seq;
-		 s->tc.snd_una = seq1;
-		 std::cout<<"snd_nxt : "<<seq <<" "<<"snd_una: "<<seq1<<std::endl;
-     s->sockd = sd;
-      SS.push_back(s);
-    char *cstr = new char [(s->sip).size()+1];
-    strcpy (cstr, (s->sip).c_str());
-    char *cstr1 = new char [(s->dip).size()+1];
-    strcpy (cstr1, (s->dip).c_str());
-    int sport = int(s->sport);
-    int dport = int(s->dport);
-    int st = int(s->sockstate);
-    //TRACE(5," Source IP is : %s , Source port is : %d , Destination IP is : %s , Destination port is : %d , State : %d \n", cstr,sport,cstr1,dport,st);
-    delete[] cstr;
-    delete[] cstr1;		
+void sockMng::setTCB(u_long seq, u_long seq1, int sd) {
+	boost::mutex::scoped_lock lock(soctabmutex);      
+	s = getSocketTable(sd);
+	s->tc.snd_nxt = seq;
+	s->tc.snd_una = seq1;
+  
+	/* FOLLOWING IS NOT NECESSAR*/ /*
+  for(stbiter=SS.begin(); stbiter!=SS.end(); stbiter++)
+  {
+	  if((*stbiter)->sockd == sd)
+    {
+      s->sport = (*stbiter)->sport; 
+      s->dport = (*stbiter)->dport; 
+      s->sip = (*stbiter)->sip;
+      s->dip = (*stbiter)->dip;
+      s->sockstate = (*stbiter)->sockstate;
+			s->tc.snd_cwnd = (*stbiter)->tc.snd_cwnd;
+      SS.erase(stbiter);
+      break;
+    }
+   }
+   
+   s->tc.snd_nxt = seq;
+	 s->tc.snd_una = seq1;
+	 std::cout<<"snd_nxt : "<<seq <<" "<<"snd_una: "<<seq1<<std::endl;
+   s->sockd = sd;
+    SS.push_back(s);
+  char *cstr = new char [(s->sip).size()+1];
+  strcpy (cstr, (s->sip).c_str());
+  char *cstr1 = new char [(s->dip).size()+1];
+  strcpy (cstr1, (s->dip).c_str());
+  int sport = int(s->sport);
+  int dport = int(s->dport);
+  int st = int(s->sockstate);
+  //TRACE(5," Source IP is : %s , Source port is : %d , Destination IP is : %s , Destination port is : %d , State : %d \n", cstr,sport,cstr1,dport,st);
+  delete[] cstr;
+  delete[] cstr1;		
+	*/
 }
 
-void sockMng::setTCBWnd(u_long winsize, int sd) {
-    boost::mutex::scoped_lock lock(soctabmutex);      
-    s = new sockTb;
-    for(stbiter=SS.begin(); stbiter!=SS.end(); stbiter++)
-	  {
-		  if((*stbiter)->sockd == sd)
-      {
-        s->sport = (*stbiter)->sport; 
-        s->dport = (*stbiter)->dport; 
-        s->sip = (*stbiter)->sip;
-        s->dip = (*stbiter)->dip;
-        s->sockstate = (*stbiter)->sockstate;
-				s->tc.snd_nxt = (*stbiter)->tc.snd_nxt;
-			  s->tc.snd_una = (*stbiter)->tc.snd_una;
+void sockMng::setTCBCwnd(u_long winsize, int sd) {
+	boost::mutex::scoped_lock lock(soctabmutex);      
+	s = getSocketTable(sd);
+	s->tc.snd_cwnd = winsize;
+}
 
-        SS.erase(stbiter);
-        break;
-      }
-     }
-     s->sockd = sd;
-		 s->tc.snd_cwnd = winsize;
-
-    SS.push_back(s);
+void sockMng::setTCBAwnd(u_long winsize, int sd) {
+	boost::mutex::scoped_lock lock(soctabmutex);      
+	s = getSocketTable(sd);
+	s->tc.snd_awnd = winsize;
 }
 
 int sockMng::setCbData(char *buf,int sd,int len) { /* what's the purpose of this func? just for insert data into circular buf? why waist so many operations*/

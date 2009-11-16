@@ -13,11 +13,8 @@ void processTou::run(int sockfd) {
 
   sm->s->printall();
 
-
-	tm.sm.s = sm->getSocketTable(sockfd);
-	cout << "tm'sprintall()\n";
+	cout << "tm's printall()\n";
 	tm.sm.s->printall();
-  static int timerid;
   size_t len = sizeof(sockaddr_in);
   
 	std::vector<sockTb*>::iterator stbiter;
@@ -26,9 +23,7 @@ void processTou::run(int sockfd) {
 	}
 	std::cout<< "number of entries: " <<ggyy<<std::endl;
 	
-	
-  send(sockfd);
-	tm.sm.s->printall();
+	processTou::send(sockfd);
 
   sockaddr_in sockaddrs ;
   cout << "Waiting for data from client "  << endl;
@@ -155,12 +150,11 @@ void processTou::send(int sockfd) {
 		cout << " number of bytes in the circular buff: "<< socktb->CbSendBuf.getTotalElements() <<endl;
   
   	/* JUST FOR TEST DEMO, Wait a little while */
-		sleep(1);
+		//sleep(1);
   
   	/* get the current window size */
 		curwnd = socktb->sc->getwnd();
   	sndsize=((socktb->tc.snd_una + curwnd)-socktb->tc.snd_nxt);
-
 		socktb->printall();//TEST
 
   	cout <<"how much i can snd base on current window size: "<< sndsize<<std::endl;

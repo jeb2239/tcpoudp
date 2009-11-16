@@ -47,7 +47,7 @@ class node_t {
 		node_t(conn_id c, time_id t, seq_id p, sockTb *s, char *pl)
 			:c_id(c), t_id(t), p_id(p), st(s) {
 			payload = new char[strlen(pl)];
-      std::cout << "sizeof pl : " << strlen(pl) <<std::endl;
+      std::cout << "timer node built ..sockfd is: "<<c<<" sizeof payload is : " << strlen(pl) <<std::endl;
 			strncpy(payload, pl, strlen(pl));
 			ms = getCurMs() + s->tc.t_timeout;
 		};
