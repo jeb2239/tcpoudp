@@ -81,14 +81,20 @@ class sockMng {
 			void setSocketTable(int );
 			void delSocketTable(int );
 			void setSocketState(int , int);
+			/* set snd_nxt, snd_una */
 			void setTCB(unsigned long ,unsigned long ,  int);
+			/* set snd_cwnd */
 			void setTCBCwnd(unsigned long, int);
+			/* set snd_awnd */
 			void setTCBAwnd(unsigned long, int);
 
+			/* set rcv_nxt in socket table */
+			void setTCBRcv(unsigned long, int);
 
+      /* insert data, data's len */ 
 			int setCbData(char *, int, int);
-			sockTb *s; /* this s should be private ???? this is just temp socktb ????????? should use function to access this s */
 		private:
+			sockTb *s;
 			std::vector<sockTb*>::iterator stbiter;
 			boost::mutex soctabmutex;
 

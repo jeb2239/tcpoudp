@@ -8,99 +8,96 @@ boost::mutex recvqmutex;
  */
 
 void processTou::run(int sockfd) {
-	int ggyy = 0;
-	touMain tm;
+	touMain tm; 
+	int			rv;						//bytes recved from other side, (NOT payload size)
+	int			rvpl;					//byte recved form other side, payload size
+	int			lenofcb;			//size of circular buffer
+	size_t	len;					//sockaddr's size
+	touPkg	pkgack;				//packet for sending ACK
+	socktb = sm->getSocketTable(sockfd);
 
+	/*for test */
   sm->s->printall();
-
-	cout << "tm's printall()\n";
-	tm.sm.s->printall();
-  size_t len = sizeof(sockaddr_in);
-  
+	int ggyy = 0;
 	std::vector<sockTb*>::iterator stbiter;
 	for(stbiter=SS.begin(); stbiter!=SS.end(); stbiter++) {
 		ggyy++;
-	}
-	std::cout<< "number of entries: " <<ggyy<<std::endl;
+	}std::cout<< "number of entries: " <<ggyy<<std::endl;
+	/* end of for test */
 	
+	/* Check if there're data needed to be send */
 	processTou::send(sockfd);
 
-  sockaddr_in sockaddrs ;
   cout << "Waiting for data from client "  << endl;
-  int rv = recvfrom(sockfd, &(tm.tp), sizeof (tm.tp), 0, (struct sockaddr*)&sockaddrs,&len);
-  tm.convertFromByteOrder(tm.tp);
-  /*
-   *check for SYN
-   */
+  /* Waiting for incoming data */
+  rv = recvfrom(sockfd, &tp, sizeof(tp), 0, (struct sockaddr*)&sockaddrs,&len);
+  tm.convertFromByteOrder(tp);
 
-  if(tm.tp.t.syn == 1) {
+  /*
+	 * Following if For Connection Control
+   */
+	/* Check for SYN flag: If ON, some action */
+  if(tp.t.syn == FLAGON) {
     cout << "SYN Received "  << endl;
-    tm.sm.setSocketTableD(&sockaddrs,sockfd);
+    sm->setSocketTableD(&sockaddrs,sockfd);
     cout <<"1111:"<<endl;
-    tm.sm.setSocketState(TOUS_SYN_RECEIVED,sockfd);
+    sm->setSocketState(TOUS_SYN_RECEIVED,sockfd);
     cout <<"2222:"<<endl;
-    tm.sm.setTCB(tm.tp.t.seq, tm.tp.t.seq,sockfd);  
+    sm->setTCB(tm.tp.t.seq, tm.tp.t.seq,sockfd);  
     cout <<"3333:"<<endl;    
-  }
+  }else if(tp.t.fin == FLAGON) {
+	/* Check for FIN flang (Close) : */
+		cout<<"Closing Connection... " << endl;        
+		boost::mutex::scoped_lock lock(socktabmutex1);
+		tm.convertToByteOrder(tm.tp);
+		sm.setTCB(tm.tp.t.seq,tm.tp.t.seq, sockfd); 
+		sm.setSocketState(TOUS_CLOSE_WAIT,sockfd);
+	/*
+	 * End of Connection Control Block
+	 */
 
-  /*
-   * Check for ACK
-   */
-  else if(tm.tp.t.ack == 1) {
-  //  tm1.delete_timer(sockfd,2,tm.tp.t.seq);
-    cout << "INSIDE ACK MANNNNNNNN  " << endl;
-    tm.sm.s->sc->addwnd();
+  /* Check for ACK */
+	}else if(tp.t.ack == FLAGON && socktb->sockstate == TOUS_ESTABLISHED) {
+		std::cout<< "Get a (new ACK) in TOUS_ESTABLISHED state\n";	
+    tm1.delete_timer(sockfd,88,tp.t.ack_seq);
+    sm.s->sc->addwnd();
+		/* set up snd_una only */
+		sm.setTCB(socktb->tc.snd_nxt, tp.t.ack_seq, sockfd);
+		/* wnd size goes up, got chance to send another pkt */
     send(sockfd);
-  }
-  
-  //if( 
-	
-  /*
-   *check for data
-   */
-  
-  else if((strlen(tm.tp.buf)) > 0 && (tm.tp.t.syn!= 1)) {
-  cout << " Accepting data .....  " <<tm.tp.buf <<  endl;
-  tm.sm.setTCB(tm.tp.t.seq,tm.tp.t.seq,sockfd);                
-  boost::mutex::scoped_lock lock(socktabmutex1);        
-  int lenofbuf = strlen(tm.tp.buf);
-  int lenofcb = tm.sm.s->CbRecvBuf.getSize();
-  
-  tm.sm.setSocketState(TOUS_CLOSE_WAIT,sockfd);
-  if(lenofbuf <= lenofcb) {
-    tm.sm.s->CbRecvBuf.insert(tm.tp.buf, lenofbuf);
-  }
-  else {
-    tm.sm.s->CbRecvBuf.insert(tm.tp.buf, lenofcb);
-  }
-    tm.sm.setCbData(tm.tp.buf,sockfd,lenofbuf);
-    cout << " Leaving process tou " << endl;
-    
-  //write code for ack send
-  //
-  //sockTb = tm.sm.getSocketTable(sd);
-   //struct sockaddr_in sockaddrs,socket1;
-  //u_short port = (s->dport);
-  //assignaddr(&sockaddrs,AF_INET,sockTb->dip,port);
-  //tp.t.ack = 1;
-  //sendto(sd,&tp,sizeof(tp),(struct sockaddr *)&sockaddrs,sizeof(sockaddr));
-  }
+	}
+	/* End of "Check for ACK */
 
-  /*
-   *check for close
-   */
+  /* Checking for incoming DATA, (RECV DATA)
+	 * NOTICE: piggyback!?		*/
+	if( 0 < (rvpl = (strlen(tp.buf))) && socktb->sockstate == TOUS_ESTABLISHED ) {
+		/* For test */
+		std::cout << "Get DATA in TOUS_ESTABLISHED state\n";
+		std::cout << "Data: "<<tp.buf <<std::endl;
 
-  else if(tm.tp.t.fin == 1) {
-  cout<<"Closing Connection... " << endl;        
-  boost::mutex::scoped_lock lock(socktabmutex1);
-  tm.convertToByteOrder(tm.tp);
-  tm.sm.setTCB(tm.tp.t.seq,tm.tp.t.seq, sockfd); 
-  tm.sm.setSocketState(TOUS_CLOSE_WAIT,sockfd);
-  
-  }
+		/* set up rcv_nxt */
+		sm.setTCBRcv(tp.t.seq + rvpl, sockfd);
 
+		/* Try to put data into circular buff */
+		if( rvpl <= (lenofcb = (socktb->CbRecvBuf.getAvSize())) ){
+      // insert all of buf into cb
+			lenofbc = sm.setCbData(tp.buf, rvpl, sockfd);
+		}else{
+			// just insert size of available cb
+			lenofbc = sm.setCbData(tp.buf, lenofbc, sockfd);
+		}
 
-}
+		/* sendback the ACK to sender */
+		assignaddr((struct sockaddr_in *)&sockaddrs, AF_INET, socktb->dip, socktb->dport); //should ck success or not
+		pkgack.putHeaderSeq(socktb->tc.snd_nxt, socktb->tc.rcv_nxt);
+		pkgack.t.ack = FLAGON;
+
+		std::cout << " >>> [SEND ACK] data sent <<< " <<std::endl;
+		sendto(sockfd, &pkgack, sizeof(pkgack), 0, (struct sockaddr *)&sockaddrs, sizeof(sockaddrs));
+  }/* End of Checking for incoming DATA */
+
+	cout << " *** Leaving process tou *** " << endl;
+}/* END of processtou */
 
 
 /*************************************************
