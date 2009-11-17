@@ -41,7 +41,8 @@ class processTou {
     int										sockfd;
 		sockMng								*sm;
 	  sockTb								*socktb;
-    struct sockaddr_in		sockaddr;
+		touPkg								tp;
+    struct sockaddr_in		sockaddrs;
 
 		void send(int sockfd);
 		int popsndq(sockTb *socktb, char *sendbuf, int len);
