@@ -5,7 +5,7 @@
 class touCb {
     public:
       short             t_state;                //11 connection states
-      short		cc_state;		  //3 congestion states
+      short							cc_state;								//3 congestion states
       short             t_timer[TOUT_TIMERS];   //4 timers
 			unsigned long			t_timeout;							//current timeout(ms)
       u_short           t_flags;                //pending

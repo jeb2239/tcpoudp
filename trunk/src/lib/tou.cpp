@@ -10,13 +10,13 @@ using namespace std;
  *@result converts to byteorder	
  */
 	
-void touMain::convertFromByteOrder(touPkg tp) {
+void touMain::convertFromByteOrder(touPkg *tp) {
 
-	tp.t.seq = ntohl(tp.t.seq);
-  tp.t.mag = ntohl(tp.t.seq);
-	tp.t.ack_seq = ntohl(tp.t.seq);
-  tp.t.syn = ntohs(tp.t.syn);
-  tp.t.ack = ntohs(tp.t.ack);
+	tp->t.seq = ntohl(tp->t.seq);
+  tp->t.mag = ntohl(tp->t.seq);
+	tp->t.ack_seq = ntohl(tp->t.seq);
+  tp->t.syn = ntohs(tp->t.syn);
+  tp->t.ack = ntohs(tp->t.ack);
 }
 
 /*
