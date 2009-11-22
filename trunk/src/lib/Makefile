@@ -46,8 +46,9 @@ ARFLAGS = cru
 libtou_a_AR = $(AR) $(ARFLAGS)
 libtou_a_LIBADD =
 am_libtou_a_OBJECTS = tou.$(OBJEXT) timer.$(OBJEXT) timerMng.$(OBJEXT) \
-	tou_ss_ca.$(OBJEXT) tou_process_send.$(OBJEXT) \
-	circularbuffer.$(OBJEXT) processtou.$(OBJEXT)
+	tou_ss_ca.$(OBJEXT) touSockTable.$(OBJEXT) \
+	tou_process_send.$(OBJEXT) circularbuffer.$(OBJEXT) \
+	processtou.$(OBJEXT)
 libtou_a_OBJECTS = $(am_libtou_a_OBJECTS)
 DEFAULT_INCLUDES = -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -62,11 +63,11 @@ DIST_SOURCES = $(libtou_a_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} /media/XTRA/Columbia/Courses/Project/tcpoudp/missing --run aclocal-1.10
-AMTAR = ${SHELL} /media/XTRA/Columbia/Courses/Project/tcpoudp/missing --run tar
-AUTOCONF = ${SHELL} /media/XTRA/Columbia/Courses/Project/tcpoudp/missing --run autoconf
-AUTOHEADER = ${SHELL} /media/XTRA/Columbia/Courses/Project/tcpoudp/missing --run autoheader
-AUTOMAKE = ${SHELL} /media/XTRA/Columbia/Courses/Project/tcpoudp/missing --run automake-1.10
+ACLOCAL = ${SHELL} /home/cl2804/projtou/missing --run aclocal-1.10
+AMTAR = ${SHELL} /home/cl2804/projtou/missing --run tar
+AUTOCONF = ${SHELL} /home/cl2804/projtou/missing --run autoconf
+AUTOHEADER = ${SHELL} /home/cl2804/projtou/missing --run autoheader
+AUTOMAKE = ${SHELL} /home/cl2804/projtou/missing --run automake-1.10
 AWK = mawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -76,13 +77,13 @@ CXX = g++
 CXXDEPMODE = depmode=gcc3
 CXXFLAGS = -g -O2
 CYGPATH_W = echo
-DEFS = -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE_URL=\"\"
+DEFS = -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\"
 DEPDIR = .deps
 ECHO_C = 
 ECHO_N = -n
 ECHO_T = 
 EXEEXT = 
-INSTALL = /usr/bin/install -c
+INSTALL = /usr/X11R6/bin/install -c
 INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
@@ -91,7 +92,7 @@ LDFLAGS =
 LIBOBJS = 
 LIBS = 
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /media/XTRA/Columbia/Courses/Project/tcpoudp/missing --run makeinfo
+MAKEINFO = ${SHELL} /home/cl2804/projtou/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
 OBJEXT = o
 PACKAGE = tou
@@ -106,10 +107,10 @@ SET_MAKE =
 SHELL = /bin/bash
 STRIP = 
 VERSION = 0.1
-abs_builddir = /media/XTRA/Columbia/Courses/Project/tcpoudp/src/lib
-abs_srcdir = /media/XTRA/Columbia/Courses/Project/tcpoudp/src/lib
-abs_top_builddir = /media/XTRA/Columbia/Courses/Project/tcpoudp
-abs_top_srcdir = /media/XTRA/Columbia/Courses/Project/tcpoudp
+abs_builddir = /home/cl2804/projtou/src/lib
+abs_srcdir = /home/cl2804/projtou/src/lib
+abs_top_builddir = /home/cl2804/projtou
+abs_top_srcdir = /home/cl2804/projtou
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 am__include = include
@@ -129,7 +130,7 @@ host_alias =
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = $(SHELL) /media/XTRA/Columbia/Courses/Project/tcpoudp/install-sh
+install_sh = $(SHELL) /home/cl2804/projtou/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -149,7 +150,7 @@ target_alias =
 top_builddir = ../..
 top_srcdir = ../..
 noinst_LIBRARIES = libtou.a
-libtou_a_SOURCES = tou.cpp timer.cpp timerMng.cpp tou_ss_ca.cpp tou_process_send.cpp circularbuffer.cpp processtou.cpp
+libtou_a_SOURCES = tou.cpp timer.cpp timerMng.cpp tou_ss_ca.cpp touSockTable.cpp tou_process_send.cpp circularbuffer.cpp processtou.cpp 
 INCLUDES = -I../../boostlib/boost_1_40_0
 CLEANFILES = *~ *.o
 all: all-am
@@ -204,6 +205,7 @@ include ./$(DEPDIR)/processtou.Po
 include ./$(DEPDIR)/timer.Po
 include ./$(DEPDIR)/timerMng.Po
 include ./$(DEPDIR)/tou.Po
+include ./$(DEPDIR)/touSockTable.Po
 include ./$(DEPDIR)/tou_process_send.Po
 include ./$(DEPDIR)/tou_ss_ca.Po
 

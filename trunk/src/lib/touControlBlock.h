@@ -12,19 +12,20 @@ class touCb {
   /*
    *  * WND & SEQ control. See RFC 783
    *   */
+			/*NOTE: Chinmay should put ur init rand # here. Don't just assign directly */
       u_long            iss;                    //initial send seq #
       u_long            irs;                    //initial rcv seq #
+
       u_long            snd_una;                //send # unacked
       u_long            snd_nxt;                //send # next
+			u_long            rcv_nxt;                //rcv  # next
 
       u_long						snd_ack;								//send's ack #
-
       u_long            snd_w11;                //send wnd update seg seq #
       u_long            snd_w12;                //send wnd update seg ack #
-      u_long            snd_wnd;                //sender's window
 
+      u_long            snd_wnd;                //sender's window
       u_long            rcv_wnd;                //rcv window
-      u_long            rcv_nxt;                //rcv next
 
       /*
        *  * Additional var for this implementation

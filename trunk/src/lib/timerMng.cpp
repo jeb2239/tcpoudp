@@ -33,6 +33,7 @@ bool timerMng::add(conn_id cid, time_id tid, seq_id pid, sockTb *st, char *paylo
 	boost::mutex::scoped_lock lock(timermutex);
 	timernode = new node_t(cid, tid, pid, st, payload);
 	timerheap.push(*timernode);
+	std::cout<< " *** Add Timer cid: "<<cid <<" seq_id: "<< pid<<" TID: "<<tid<<" *** "<<std::endl;
 	
   //test
   //std::cout << "timer(ms: "<<timernode->ms <<") (id: "<<timernode->c_id << " pid: " << timernode->p_id<<" is added  "<<ms <<" "<<getCurMs() <<" "<< timernode<<std::endl;
@@ -42,7 +43,8 @@ bool timerMng::add(conn_id cid, time_id tid, seq_id pid, sockTb *st, char *paylo
  * Reg the id into vector
  * ******************************************/
 bool timerMng::delete_timer(conn_id cid, time_id tid, seq_id pid){
-  if(timercker->addDelNode(cid, tid, pid)) std::cout<< " *** Add del Anchor CID: "<<cid << pid<<" TID: "<<tid<<" *** "<<std::endl;
+  if(timercker->addDelNode(cid, tid, pid)) 
+		std::cout<< " *** Add del Anchor cid: "<<cid <<" seq_id: "<< pid<<" TID: "<<tid<<" *** "<<std::endl;
 }
 
 bool timerMng::reset(conn_id cid, time_id tid, seq_id pid){

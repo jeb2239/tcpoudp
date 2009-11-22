@@ -23,50 +23,46 @@ class sockTb {
 	private:
 		boost::mutex soctabmutex;
   public:
-    touCb	tc;			//tcp control block
-    int			sockd;		//socket file descriptor
+    touCb		tc;					//tcp control block
+    int			sockd;			//socket file descriptor
 		int			sockstate;  //SOCK_CREATED, BIND, LISTEN, CONNECT, ESTABLISHED, TERMINATING
     u_short	sport;
     u_short dport;      //destination port
 		std::string  sip;
-		std::string  dip;        //destination ip 
-    int 	cid;        //connection id. probably dont need it
+		std::string  dip;		//destination ip 
+    int			cid;				//connection id. probably dont need it
     int     tcpstate;   //state in which the connection is   
     CircularBuffer 	CbSendBuf;
     CircularBuffer 	CbRecvBuf;
-		ssca	*sc;		//congestion control class
+		ssca	*sc;					//congestion control class
 
-	/* TEST */
-	int		ackcount;/* FOR TEST ONLY */
+		/* TEST */
+		int		ackcount;/* FOR TEST ONLY */
+		
+		/* touControlBlock(tc) must be initialized*/
     sockTb() {
-      /*
-	  sip = (char*)malloc(sizeof(char)*30);
-	  dip = (char*)malloc(sizeof(char)*30);
-	  */
       CbSendBuf.setSize(TOU_MAX_CIRCULAR_BUF);
 			CbRecvBuf.setSize(TOU_MAX_CIRCULAR_BUF);
 			sc = new ssca(&tc); 
-			tc.t_timeout = 3000;//3000ms
-	}
+			tc.t_timeout = TOU_INIT_TIMEO;
+		}
 
-	~sockTb() {
-	  /*
-	  free(sip);
-	  free(dip);
-	  */
-	  delete sc;
-	}
-	void printall() {
-		std::cout<<"sockd  : "<<sockd<<" sport :"<<sport<<" dport :"<<dport <<std::endl;
-		//cout<<"sip    : "<<sip<<" dip : "<<dip <<endl;
-		std::cout<<"cc_state: "<<tc.cc_state<<std::endl;
-		std::cout<<"snd_una: "<<tc.snd_una<<std::endl;
-		std::cout<<"snd_nxt: "<<tc.snd_nxt<<std::endl;
-		std::cout<<"snd_cwnd:"<<tc.snd_cwnd<<std::endl;
-		std::cout<<"snd_awnd:"<<tc.snd_awnd<<std::endl;
-		std::cout<<"snd_ssthresh:"<<tc.snd_ssthresh<<std::endl<<std::endl;
-	}
+		~sockTb() {
+			delete sc;
+		}
 
+		void printall() {
+			std::cout<<"*** SOCKET TABLE RESULT ***\n";
+			std::cout<<"sockd: "<<sockd<<" sport: "<<sport<<" dport: "<<dport <<std::endl;
+			//cout<<"sip    : "<<sip<<" dip : "<<dip <<endl;
+			std::cout<<"cc_state: "<<tc.cc_state<<std::endl;
+			std::cout<<"snd_una : "<<tc.snd_una<<std::endl;
+			std::cout<<"snd_nxt : "<<tc.snd_nxt<<std::endl;
+			std::cout<<"rcv_nxt : "<<tc.rcv_nxt<<std::endl;
+			std::cout<<"snd_cwnd:"<<tc.snd_cwnd<<std::endl;
+			std::cout<<"snd_awnd:"<<tc.snd_awnd<<std::endl;
+			std::cout<<"snd_ssthresh:"<<tc.snd_ssthresh<<std::endl<<std::endl;
+		}
 };
 
 /* SS is Socket Table for storing socket informaiton */
@@ -81,15 +77,12 @@ class sockMng {
 			void setSocketTable(int );
 			void delSocketTable(int );
 			void setSocketState(int , int);
-			/* set snd_nxt, snd_una */
-			void setTCB(unsigned long ,unsigned long ,  int);
-			/* set snd_cwnd */
-			void setTCBCwnd(unsigned long, int);
-			/* set snd_awnd */
-			void setTCBAwnd(unsigned long, int);
 
-			/* set rcv_nxt in socket table */
-			void setTCBRcv(unsigned long, int);
+			void setTCBState(int, int);												/* set tcb's congestion state */
+			void setTCB(unsigned long ,unsigned long ,  int);	/* set snd_nxt, snd_una */
+			void setTCBCwnd(unsigned long, int);							/* set snd_cwnd */
+			void setTCBAwnd(unsigned long, int);							/* set snd_awnd */
+			void setTCBRcv(unsigned long, int);								/* set rcv_nxt in socket table */
 
       /* insert data, data's len */ 
 			int setCbData(char *, int, int);

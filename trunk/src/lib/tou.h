@@ -101,8 +101,8 @@ class touMain {
 	ptou = new processTou(sockfd, &sm);
 	}
 
-	void convertToByteOrder(touPkg);
-	void convertFromByteOrder(touPkg);
+	void convertToByteOrder(touPkg&);
+	void convertFromByteOrder(touPkg&);
 	int timero(int , int);
 	int assignaddr(struct sockaddr_in *, sa_family_t , std::string , u_short);
 	

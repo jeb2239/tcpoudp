@@ -1,23 +1,28 @@
 #include "tou.h"
+#include <fstream>
+#define MAXSNDBUF 1024
 
 int assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_family, string ip, unsigned short port){
-	  bzero(sockaddr, sizeof(*sockaddr));
-		  sockaddr->sin_family = sa_family;
-			  sockaddr->sin_port = htons(port);
-				  if( 1 != inet_pton(sa_family, ip.c_str(), &sockaddr->sin_addr) )
-						    return 0;
-					  return 1;
+	bzero(sockaddr, sizeof(*sockaddr));
+	sockaddr->sin_family = sa_family;
+	sockaddr->sin_port = htons(port);
+	if( 1 != inet_pton(sa_family, ip.c_str(), &sockaddr->sin_addr) )
+	  return 0;
+	return 1;
 };
 
 
 int main(int argc, char* argv[]){
-	touMain tm;
-	struct sockaddr_in socket1;
-	struct sockaddr_in socket2;
-	char send_data[1024],recv_data[1024];
+	touMain							tm;
+	struct sockaddr_in	socket1;
+	struct sockaddr_in	socket2;
+	char								send_data[MAXSNDBUF],recv_data[MAXSNDBUF];
+	ifstream            indata;
+	int									readsize; //how much data been read
+	int									sendsize; //how much data been sent
 
 	std::cout << " Welcom to ToU \n" ;
-  if(argc ==3 && !strncmp( argv[2], "-c", 2))
+  if(argc == 4 && !strncmp( argv[3], "-c", 2)) /* ./tou 127.0.0.1 ./test_file -c */
 	{
 		cout << "Client mode.. " << endl;
 		int sd,sockd;
@@ -30,43 +35,80 @@ int main(int argc, char* argv[]){
     //printf("%s: sending data to '%s' (IP : %s) \n", argv[0], h->h_name, inet_ntoa(*(struct in_addr *)h->h_addr_list[0]));
     
     //Set socket 1
-	  //Server socket //WHAT IS THIS????????????????????????????????????????????????????
+	  //set up Server socket info
     memset(&socket1, 0, sizeof(socket1));
    	socket1.sin_family = h->h_addrtype;
    	memcpy((char *) &socket1.sin_addr.s_addr,h->h_addr_list[0], h->h_length);
     socket1.sin_port = htons(1500);
-
+    
+		/* assign server's addr */
 		assignaddr(&socket1, AF_INET, "127.0.0.1", 1500);
-
 		std::cout<<inet_ntoa(socket1.sin_addr)<< "  " <<htons(socket1.sin_port) << std::endl;
+
 		//Client socket
 		sockd = tm.touSocket(AF_INET,SOCK_DGRAM,0);
 	
-		//Set socket 2
+		//set up Client socket info 
 		memset(&socket2,0,sizeof(socket2));
 		socket2.sin_family = AF_INET;
 		socket2.sin_addr.s_addr=inet_addr("127.0.0.1");
 		socket2.sin_port = htons(1501);
 	
-		//BIND //CLIENT SHOULD NOT BINE???????????????????????????????????????????????????????
+		//BIND //CLIENT SHOULD NOT BINE?????????????????? Chinmay Make it _TODO_ list
 		sd = tm.touBind(sockd,(struct sockaddr*) &socket2,sizeof socket2);
-		unsigned long len;
 	
 		//CONNECT
 		sd = tm.touConnect(sockd,(struct sockaddr_in*)&socket1,sizeof(socket1));
 		cout << "Connect returns : "<< sd << endl;
+
+		//set up select func socket
+    fd_set socks;
+ 		struct timeval tim;
+ 		FD_ZERO(&socks);
+ 		FD_SET(sockd, &socks);
+ 		tim.tv_sec = 10;
+
+		/* reading file */
+		indata.open(argv[2]); // opens the file
+		if(!indata) { // file couldn't be opened
+			cerr << "Error: file could not be opened" << endl;
+			exit(1);
+		}
 		
 		//Initialize process tou
 		tm.proTou(sockd);
 
-		//while(1)
+		if( !indata.eof() ){
+			cerr << "Reading data from file: "<< argv[2] << std::endl;
+			indata.read(send_data, MAXSNDBUF);
+			readsize = indata.gcount();
+		}
+
+		cout<< " Now sending...: " << endl;
+		sendsize = tm.touSend(sockd,send_data,strlen(send_data),0);
+		cout << "Programmer think that "<<sendsize << " bytes of data has been sent \n";
+		tm.ptou->run(sockd);
+
+		while(1)
 		{
-			cout<< "Enter data to be sent : " << endl;
-			gets(send_data);
-			cout<< "Now sending...: " << endl;
-			tm.touSend(sockd,send_data,strlen(send_data),0);
-			tm.ptou->run(sockd);
+			if (select(sockd+1, &socks, NULL, NULL, &tim)){
+				if( !indata.eof() ) {
+					cout<< " >>>>>> Now sending...(Inside while(1) select Loop)...: " << endl;
+					indata.read(send_data, MAXSNDBUF);
+					readsize = indata.gcount();
+					sendsize = tm.touSend(sockd,send_data,strlen(send_data),0);
+					cout<< " Now use \"touSend\". Try sending...: " << endl;
+					sendsize = tm.touSend(sockd,send_data,strlen(send_data),0);
+					cout << "Programmer think that "<<sendsize << " bytes of data has been sent \n";
+				}
+
+				tm.ptou->run(sockd);
+			}else {
+				 cerr << "Select timeout: Move tto touClose func!" << endl;
+				 break;
+			}
 		} 
+		cerr << "While(1) LOOP over, move to touClose function now..." << endl;
 		tm.touClose(sockd);
 		/* End of Client Code */
 	
@@ -105,40 +147,29 @@ int main(int argc, char* argv[]){
 		//Initialize processTou
 		tm.proTou(sockd);
 
-		//  while(1)
-		{    
-    //if (select(sockd+1, &socks, NULL, NULL, &tim))
-			{
-				//TODO : Write logic for checking tou sockd here
-				cout << "Inside ...... " << endl;
-			}
-		}      
-
-		//processTou *p = new processTou(sockd);
 		socklen_t sinlen = sizeof(socket2);
 		tm.ptou->run(sockd);
 		sd = tm.touAccept(sockd,(struct sockaddr_in*)&socket2,&sinlen);
-		cout << " Accept is donw, and now for the receiving part " << endl;
+		cout << " Accept return, "<< sd <<" , and now for the receiving part " << endl;
 
-		//while(1){    
-		//	if (select(sockd+1, &socks, NULL, NULL, &tim)){ //SELECT FORM WHAT TO WAHT?????????????????????????????????????????????????
-				//TODO : Write logic for checking tou sockd here
-				cout << "Inside Select ...... " << endl;
+		while(1){    
+			if (select(sockd+1, &socks, NULL, NULL, &tim)){ //SELECT FORM WHAT TO WAHT?????????????????????????????????????????????????
+				cout << "Inside Begin of While(1), Select Looop...... " << endl;
 				tm.ptou->run(sockd);
 				
 				memset(recv_data, 0, sizeof(recv_data));
-				tm.touRecv(sockd,recv_data,100,0);
-				cout << "Received Data : " << recv_data << endl;
-			//}
-		//}      
-		cout << "Done with the receiving part " << endl;
+				sd = tm.touRecv(sockd,recv_data,100,0);
+				cout << "Received Data : touRecv return -" << sd << " siseof recv buf is -"<<sizeof(recv_data) << endl;
+			}else{
+				cout << "Done with the receiving part, move to touClose \n";
+				break;
+			}      
+		}
 	
-		if (select(sockd+1, &socks, NULL, NULL, &tim)){
-			//TODO : Write logic for checking tou sockd here
-			cout << "Inside Close...... " << endl;
-			tm.ptou->run(sockd);
-			tm.touClose(sockd);
-    }      
+		cout << "Inside Close...... " << endl;
+		tm.ptou->run(sockd);
+		tm.touClose(sockd);
+       
   }/*END OF SERVER PART*/
 
 	return 0;

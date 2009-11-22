@@ -3,8 +3,10 @@
  **************************************************/
 #define TOU_MSS				1456
 #define TOU_MAX				1456
-#define FLAGON  1
-#define FLAGOFF 0
+#define FLAGON				1
+#define FLAGOFF				0
+
+#include <iostream>
 
 
 /***************************************************
@@ -40,11 +42,11 @@ class touHeader {
 class touPkg {
 	public:
 		touHeader	t;
-		char		buf[TOU_MSS];
+		char			buf[TOU_MSS];
 
 		/* default constructor would new a pkg with TOU_MAX */
 		/*touPkg(){ buf = new char[TOU_MAX]; }
-		/* specified what size you want assign to payload */
+		 specified what size you want assign to payload */
 		//touPkg(int payloadsize) { buf = new char[payloadsize]; }
 		
 		/* recycle the buf */
@@ -52,8 +54,28 @@ class touPkg {
 		}
 
 		int putHeaderSeq(u_long seq=0, u_long ack_seq=0){
+			/*
 			t.seq = htonl(seq);
 			t.ack_seq = htonl(ack_seq);
 			t.mag = htonl(0x7194B32E);
+		  */	
+			t.seq = seq;
+			t.ack_seq = ack_seq;
+			t.mag = 0x7194B32E;
 		}
+
+		void printall(){
+			std::cout<< "### Packet ###\n";
+			std::cout<< "SEQ: "<< (t.seq) << " SEQ_ACK: "<< (t.ack_seq) <<std::endl;
+			std::cout<< "SYN: "<< t.syn << " ACK: "<< t.ack << " FIN: "<< t.fin <<std::endl;
+		}
+
+		unsigned long getSeq(){
+			return (t.seq);
+		}
+
+		unsigned long getAckseq(){
+			return (t.ack_seq);
+		}
+
 };
