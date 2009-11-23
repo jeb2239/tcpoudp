@@ -98,7 +98,7 @@ class touMain {
 	int touClose(int);
 	
 	int proTou(int sockfd) {
-	ptou = new processTou(sockfd, &sm);
+		ptou = new processTou(sockfd, &sm, &tp);
 	}
 
 	void convertToByteOrder(touPkg&);

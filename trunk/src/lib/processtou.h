@@ -26,9 +26,10 @@ class processTou {
       //run(sockfd);
       
     }
-		processTou(int sd, sockMng *sockmng){
+		processTou(int sd, sockMng *sockmng, touPkg *toupkg){
 			std::cout<< "*** processTou(int sd, sockMng *sm) is activized now ***\n";
 			sockfd = sd;
+			tp = toupkg;
 			sm = sockmng;
       //run(sockfd);
 		}
@@ -41,7 +42,7 @@ class processTou {
     int										sockfd;
 		sockMng								*sm;
 	  sockTb								*socktb;
-		touPkg								tp;
+		touPkg								*tp;
     struct sockaddr_in		sockaddrs;
 
 		void send(int sockfd);

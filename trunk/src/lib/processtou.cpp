@@ -30,9 +30,9 @@ void processTou::run(int sockfd) {
 
   cout << " *** processTou Start Processtou now Waiting for data from client *** "  << endl;
   /* Waiting for incoming data */
-  rv = recvfrom(sockfd, &tp, sizeof(tp), 0, (struct sockaddr*)&sockaddrs,&len);
+  rv = recvfrom(sockfd, tp, sizeof(*tp), 0, (struct sockaddr*)&sockaddrs,&len);
   //tm.convertFromByteOrder(tp);
-	tp.printall();
+	tp->printall();
 	cout << "Received from : " << inet_ntoa(sockaddrs.sin_addr) <<  " " << htons(sockaddrs.sin_port) << endl; 
 
 
@@ -40,30 +40,30 @@ void processTou::run(int sockfd) {
 	 * Following if For Connection Control
    */
 	/* Check for SYN flag: If ON, some action */
-  if(tp.t.syn == FLAGON /*&& socktb. condition is not right*/) { //server. 
+  if(tp->t.syn == FLAGON /*&& socktb. condition is not right*/) { //server. 
     cout << "SYN Received "  << endl;
     sm->setSocketTableD(&sockaddrs,sockfd);
     sm->setSocketState(TOUS_SYN_RECEIVED,sockfd);
     //sm->setTCB(tm.tp.t.seq, tm.tp.t.seq,sockfd);  
-  }else if(tp.t.fin == FLAGON) {
+  }else if(tp->t.fin == FLAGON) {
 	/* Check for FIN flang (Close) : */
 		cout<<"Closing Connection... " << endl;        
 		boost::mutex::scoped_lock lock(socktabmutex1);
 		//tm.convertToByteOrder(tm.tp);
-		sm->setTCB(tm.tp.t.seq,tm.tp.t.seq, sockfd); 
+		//sm->setTCB(tm.tp.t.seq,tm.tp.t.seq, sockfd); 
 		sm->setSocketState(TOUS_CLOSE_WAIT,sockfd);
 	/*
 	 * End of Connection Control Block
 	 */
 
   /* Check for ACK */
-	}else if(tp.t.ack == FLAGON && socktb->sockstate == TOUS_ESTABLISHED) {
+	}else if(tp->t.ack == FLAGON && socktb->sockstate == TOUS_ESTABLISHED) {
 		std::cout<< "Get a (new ACK) in TOUS_ESTABLISHED state\n";	
-    tm1.delete_timer(sockfd,88,tp.t.ack_seq);
-		tp.printall();
+    tm1.delete_timer(sockfd,88,tp->t.ack_seq);
+		tp->printall();
     socktb->sc->addwnd();
 		// set up snd_una only 
-		sm->setTCB(socktb->tc.snd_nxt, tp.t.ack_seq, sockfd);
+		sm->setTCB(socktb->tc.snd_nxt, tp->t.ack_seq, sockfd);
 		socktb->printall();
 		// wnd size goes up, got chance to send another pkt
     send(sockfd);
@@ -72,21 +72,21 @@ void processTou::run(int sockfd) {
 
   /* Checking for incoming DATA, (Receiving DATA)
 	 * NOTICE: piggyback!?		*/
-	if( 0 < (rvpl = (strlen(tp.buf))) && socktb->sockstate == TOUS_ESTABLISHED ) {
+	if( 0 < (rvpl = (strlen(tp->buf))) && socktb->sockstate == TOUS_ESTABLISHED ) {
 		/* For test */
 		std::cout << "Get DATA in TOUS_ESTABLISHED state\n";
-		std::cout << "Data: "<<tp.buf <<std::endl;
+		std::cout << "Data: "<<tp->buf <<std::endl;
 
 		/* set up rcv_nxt */
-		sm->setTCBRcv(tp.t.seq + rvpl, sockfd);
+		sm->setTCBRcv(tp->t.seq + rvpl, sockfd);
 
 		/* Try to put data into circular buff */
 		if( rvpl <= (lenofcb = (socktb->CbRecvBuf.getAvSize())) ){
       // insert all of buf into cb
-			lenofcb = sm->setCbData(tp.buf, rvpl, sockfd);
+			lenofcb = sm->setCbData(tp->buf, rvpl, sockfd);
 		}else{
 			// just insert size of available cb
-			lenofcb = sm->setCbData(tp.buf, lenofcb, sockfd);
+			lenofcb = sm->setCbData(tp->buf, lenofcb, sockfd);
 		}
 
 		/* sendback the ACK to sender */

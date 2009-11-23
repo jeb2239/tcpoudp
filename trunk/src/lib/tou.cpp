@@ -74,167 +74,158 @@ sm.setSocketState(TOUS_LISTEN,sd);
 	
 /* 
  * Connect()
- * @result return 1 on successful  
+ * @result return 1 on successful (lee rewrite&modify version@Nov 23) 
  */
 int touMain::touConnect(int sd, struct sockaddr_in *socket1, int addrlen) {
-cout << " Inside Connect " << endl;
-int rv;
-size_t len;
-int count;
-sockaddr_in sockaddrs;
-sockTb *s = sm.getSocketTable(sd);
-sm.setSocketTableD(socket1,sd);		
-touPkg ackpkt;
-int socklen = sizeof(&socket1);
-/* set ISN state seq no and set the window size */	
-
-/* //use func. don't assign them directly...!
-tp.t.seq = rand()%(u_long)65535;
-tp.t.ack_seq = (u_long)0; 
-tp.t.mag = (u_long)9999; // Dude... I don't know what to say... check the draft before write it.. mag is not rand #
-tp.t.syn = FLAGON;
-*/
-
-tp.putHeaderSeq(rand()%(u_long)65535, (u_long)0);
-tp.t.syn = FLAGON;
-/* Connection Initialization (IMPOERTANT)*/
-sm.setSocketState(TOUS_SYN_SENT,sd);
-sm.setTCBState(TOU_CC_SS, sd);
-sm.setTCB(tp.getSeq(), tp.getSeq(),sd);
-sm.setTCBRcv(0, sd);
-sm.setTCBCwnd(2024, sd);
-sm.setTCBAwnd(2024, sd);
-
-cout<<"Sending to  :  " << inet_ntoa(socket1->sin_addr)<< "  " <<htons(socket1->sin_port) << endl;
+  cout << " Inside Connect " << endl;
+  int rv;
+  sockaddr_in sockaddrs;
+  size_t len = sizeof(sockaddr);
+	size_t addrlens = sizeof(sockaddr);
+  sockTb *s = sm.getSocketTable(sd);
+  sm.setSocketTableD(socket1,sd);		
+  touPkg ackpkt;
+  
+  ackpkt.putHeaderSeq(rand()%(u_long)65535, (u_long)0);  /* NOT correct */
+  ackpkt.t.syn = FLAGON;
+  /* Connection Initialization (IMPOERTANT)*/
+  sm.setSocketState(TOUS_SYN_SENT,sd);
+  sm.setTCBState(TOU_CC_SS, sd);
+  sm.setTCB((ackpkt.getSeq()+1), ackpkt.getSeq(),sd);
+  sm.setTCBRcv(0, sd);
+  sm.setTCBCwnd(2024, sd);
+  sm.setTCBAwnd(2024, sd);
+  
+  ackpkt.printall();
+  s->printall();
+  
   /* Send the SYN */
-tp.printall();
-s->printall();
-
-rv = sendto(sd, &tp, sizeof(tp), 0,(struct sockaddr*)socket1,sizeof(struct sockaddr_in));
-perror("send : ");
+  cout<<"Sending to  :  " << inet_ntoa(socket1->sin_addr)<< "  " <<htons(socket1->sin_port) << endl;
+  if( -1 <=  (rv = sendto(sd, &ackpkt, sizeof(ackpkt), 0,(struct sockaddr*)socket1,sizeof(struct sockaddr_in))))
+		perror("send : ");
+  
   /*Prepare for receiving */
-len = sizeof(sockaddr);
-count = 1;
-while(1) { /* WHY use while(1) loop ?*/
-  fd_set socks;
-	struct timeval tim;
-	FD_ZERO(&socks);
-	FD_SET(sd, &socks);
-	tim.tv_sec = 4;
   /*Receive SYN ACK */
-//	if (select(sd+1, &socks, NULL, NULL, &tim)) {
-//     if(s->sockstate == TOUS_SYN_SENT) {
-      rv = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr*)&sockaddrs,&len);
-		  break;
-    // }
-//	}
-//	else {
-		cout <<"SYNACK not received !! "<< endl;
-    count++;
-    if (count > 5) {close(sd); return 0;}
-  //	}
-  }
-//convertFromByteOrder(tp);
-perror("talker: sendto");
+  if (0 == (rv = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr*)&sockaddrs, &len))){
+		cout <<"Other end shutdown !! "<< endl;
+	}else if( -1 == rv ){
+		perror("talker: sendto");
+	}
+  
+  /* How do you know this pkt is the one you want? u neither ck seq # nor ck flags...!? 
+   * how about add some check mechanism
+   * ?*/
+  if(s->tc.snd_nxt == tp.getAckseq()) 
+		cout << "SYN ACK Received properly SEQ; "<<tp.getSeq()<<" ACK_SEQ: "<<tp.getAckseq()<<  endl;
+  tp.printall();
+	
+	/* update the pkt.seq to local tcp.rvc_nxt */
+  sm.setTCBRcv(tp.getSeq()+1, sd);
 
-/* How do you know this pkt is the one you want? u neither ck seq # nor ck flags...!? 
- * how about add some check mechanism
- * ?*/
-/*
-tp.t.ack_seq = tp.t.seq + 1;
-tp.t.syn = 0;
-tp.t.ack = 1;
-cout << "Seq number at the end of Connect " << tp.t.seq << endl;
-*/
-cout << " ***>>> connect pkt recved *\n";
-tp.printall();
-sm.setTCBRcv(tp.getAckseq()+1, sd);
-ackpkt.putHeaderSeq(s->tc.snd_nxt, s->tc.rcv_nxt);
-ackpkt.t.syn = FLAGOFF;
-ackpkt.t.ack = FLAGON;
+	/* set up the fianl 3-way pkt */
+  ackpkt.putHeaderSeq(s->tc.snd_nxt, s->tc.rcv_nxt);
+  ackpkt.t.syn = FLAGOFF;
+  ackpkt.t.ack = FLAGON;
+  ackpkt.printall();
+  s->printall();
+  
+  /*send ACK - final 3way handshake */
+  if( -1 <= (rv = sendto(sd, &ackpkt, sizeof(ackpkt), 0, (struct sockaddr*)socket1, addrlens)))
+		perror("send : ");
 
-/*send ACK - final 3way handshake */
-rv = sendto(sd, &ackpkt, sizeof(ackpkt), 0, (struct sockaddr*)socket1, addrlen);
-ackpkt.printall();
-s->printall();
-if(rv>1) {
-  sm.setSocketState(TOUS_ESTABLISHED,sd);
-  return true;
-  }
-}
+  if(rv>1) {
+    sm.setSocketState(TOUS_ESTABLISHED,sd);
+    return true;
+    }
+
+	return false;
+}/* End of Connect */
+
 
 
 /* 
  * Accept()
- * @result return 1 on successful  
+ * @result return 1 on successful (Lee rewrite & modify @Nov 23)
  */
 int touMain::touAccept(int sd, struct sockaddr_in *socket2, socklen_t *addrlen) {
-cout << " Inside Accept " << endl;	
-u_long	randnum;
-touPkg	ackpkt;
-int rv, control=0, flagforsyn = 1;
-size_t len = sizeof(sockaddr);
-struct sockaddr_in sockaddrs;
-sockTb *s;
-s = sm.getSocketTable(sd);
+  cout << " Inside Accept " << endl;	
+  u_long	randnum;
+  touPkg	ackpkt;
+  int rv, control=0, flagforsyn = 1;
+  struct sockaddr_in sockaddrs;
+  socklen_t len = sizeof(sockaddrs);
+  sockTb *s = sm.getSocketTable(sd);
+  
+  /* Connection Initialization (IMPOERTANT)*/
+  sm.setTCBState(TOU_CC_SS, sd);
+  randnum = rand()%(u_long)65535; /* NOT Correct */
+  sm.setTCB(randnum, randnum,sd);
+  sm.setTCBRcv((u_long)0, sd);
+  sm.setTCBCwnd(2024, sd);
+  sm.setTCBAwnd(2024, sd);
+  
+  u_short port = (s->dport);
+  cout <<"Destination :  " << s->dip << "  " << s->dport << endl;
+  assignaddr(&sockaddrs,AF_INET,s->dip,port);
 
-/* hey... I dont' understand... 
- * since you don't init value of tc.snd_nxt.
- * how can you assign this value to t.seq... 
- * it seems that 3-way handshake got some problems..........*/
-/*
-tp.t.seq = s->tc.snd_nxt;
-*/
+  if(s->sockstate == TOUS_SYN_RECEIVED) {  
+  	/* Connection Initailization */
+  	sm.setTCBRcv(tp.getSeq()+1, sd);
+  	/* End of Connection Initialization */
 
-/* Connection Initialization (IMPOERTANT)*/
-sm.setTCBState(TOU_CC_SS, sd);
-randnum = rand()%(u_long)65535;
-sm.setTCB(randnum, randnum,sd);
-sm.setTCBRcv((u_long)0, sd);
-sm.setTCBCwnd(2024, sd);
-sm.setTCBAwnd(2024, sd);
+    /* send SYN ACK */
+  	/* why use recved pkt directly without clean the data first? what if there're uncleaned flags... 
+  	 * ... I...... what to say...  be careful with coding... 
+  	 * it may not cause any problem here, but it's important to take care of ur code well.
+  	 *
+  	 * BTW, random # is wrong... it should go with "seed" maybe u can ck out the usage menu.
+  	 */
 
-u_short port = (s->dport);
-cout <<"Destination :  " << s->dip << "  " << s->dport << endl;
-assignaddr(&sockaddrs,AF_INET,s->dip,port);
-if(s->sockstate == TOUS_SYN_RECEIVED) {  
-	/* Connection Initailization */
-	sm.setTCBRcv(tp.getSeq()+1, sd);
-	/* End of Connection Initialization */
-  /* send SYN ACK */
-	/* why use recved pkt directly without clean the data first? what if there're uncleaned flags... 
-	 * ... I...... what to say...  be careful with coding... 
-	 * it may not cause any problem here, but it's important to take care of ur code well.
-	 *
-	 * BTW, random # is wrong... it should go with "seed" maybe u can ck out the usage menu.
-	 */
-	
-	/*
-  tp.t.ack_seq = 
-	tp.t.seq = rand()%(u_long)65530;
- 	tp.t.syn = 1;
- 	tp.t.ack = 1;
-	*/
-	ackpkt.putHeaderSeq(s->tc.snd_nxt, s->tc.rcv_nxt);
-	ackpkt.t.syn = FLAGON;
-	ackpkt.t.ack = FLAGON;
+		cerr<< "Recv the first SYN \n\n";
+		tp.printall();
+		s->printall();
+  	
+		/* set up the ack pkt */
+  	ackpkt.putHeaderSeq(s->tc.snd_nxt, s->tc.rcv_nxt);
+  	ackpkt.t.syn = FLAGON;
+  	ackpkt.t.ack = FLAGON;
 
-  ////convertToByteOrder(tp);
-    		//Code for testing begin
-	rv = sendto(sd, &ackpkt, sizeof(ackpkt), 0, (struct sockaddr *)&sockaddrs, sizeof(struct sockaddr_in));
-  perror("send : ");
-	/*recv third handshake */
-	rv = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr *)socket2, &len);
-	//convertFromByteOrder(tp);
-	if (tp.t.ack_seq == tp.t.seq + 1){
-		/* Connection ControlTable Update */
-		sm.setTCBRcv(tp.getSeq()+1, sd);
-    cout<<"Accpet received final 3-way handshake ACK. Connection ESTABLISHED !!!" << endl;
-	}
-  sm.setSocketState(TOUS_ESTABLISHED,sd);
-  return true;
-  }
-return false;
+		/* update the local TCB, and ready to send */
+		sm.setTCB(s->tc.snd_nxt+1, s->tc.snd_una, sd);
+
+  
+    //Code for testing begin
+  	if( -1 == (rv = sendto(sd, &ackpkt, sizeof(ackpkt), 0, (struct sockaddr *)&sockaddrs, len)))
+			perror("send : ");
+
+		cerr<< "Sending the first  SYN ACK \n\n";
+		ackpkt.printall();
+		s->printall();
+
+  	/*recv final(ACK) handshake */
+  	rv = recvfrom(sd, &tp, sizeof tp, 0, (struct sockaddr *)socket2, addrlen);
+		cerr<< "Recving the final ACK \n\n";
+		tp.printall();
+
+  	if ((s->tc.snd_una+1) == tp.getAckseq()){
+  		/* Connection ControlTabe Update */
+			sm.setTCB(s->tc.snd_nxt,s->tc.snd_una+1, sd);
+			cout<<"1. Accpet received final 3-way handshake ACK. Connection ESTABLISHED !!!" << endl;
+	  }
+		if ((s->tc.rcv_nxt) == tp.getSeq()){
+			/* Connection ControlTabe Update */
+  		sm.setTCBRcv(tp.getSeq(), sd);
+      cout<<"2. Accpet received final 3-way handshake ACK. Connection ESTABLISHED !!!" << endl;
+  	}
+
+
+    sm.setSocketState(TOUS_ESTABLISHED,sd);
+		tp.printall();
+		s->printall();
+    return true;
+    }
+
+  return false;
 }
 
 /* 
