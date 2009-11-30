@@ -3,19 +3,10 @@
  * Here configure the Project inclusions, definitions, and variables 
  *************************************************************************/
 #include "touSockTable.h"
-#include "touHeader.h"
-
-#include <iostream>
-#include <string.h>
 #include <unistd.h>
 #include <time.h>
-#include <string>
 #include <sys/time.h>
 #include <functional>
-#include <queue>
-#include <deque>
-#include <vector>
-
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/timer.hpp>
 
@@ -47,12 +38,12 @@ class node_t {
 		node_t(conn_id c, time_id t, seq_id p, sockTb *s, char *pl)
 			:c_id(c), t_id(t), p_id(p), st(s) {
 			payload = new char[strlen(pl)];
-      std::cout << "timer node built ..sockfd is: "<<c<<" sizeof payload is : " << strlen(pl) <<std::endl;
+      std::cout << "timer node built ..sockfd is: "<<c<<" sizeof payload is : " << strlen(pl) <<" socktb->tc.snd_ack: "<<st->tc.rcv_nxt <<std::endl;
 			strncpy(payload, pl, strlen(pl));
 			ms = getCurMs() + s->tc.t_timeout;
-		};
+			};
 
-    ~node_t(){ /*delete payload;*/ };
+		~node_t(){ /*delete payload;*/ };
 
     conn_id	c_id;
     time_id	t_id;
@@ -69,7 +60,10 @@ class heapComp {
   public:
     bool operator() (const node_t& lhs, const node_t& rhs) const {
 		  if((lhs.ms==rhs.ms)) {
-		    return((lhs.c_id > rhs.c_id));
+				if(lhs.c_id == rhs.c_id){
+					return (lhs.p_id >= rhs.p_id);	/* NOTE Rotation XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
+				}
+		    return((lhs.c_id >= rhs.c_id));
 		  }else{
 		    return (lhs.ms >= rhs.ms);
 		  }
@@ -114,6 +108,15 @@ class timerCk {
       return false;
     }
 
+		//jsut ck the vector whether there'a specific timer or not
+		bool ckTimer(conn_id cid, time_id tid, seq_id pid){
+      for(it=tdv.begin(); it<tdv.end(); it++) {
+				if ((it->c_id == cid) && (it->t_id == tid) &&(it->p_id == pid))
+					return true;
+      }//end of for
+      return false;
+    }
+
   private:
     void doit();
     node_t *nt;
@@ -138,6 +141,7 @@ class timerMng {
     bool delete_timer(conn_id cid, time_id tid, seq_id pid);
     bool reset(conn_id cid, time_id tid, seq_id pid);
     bool reset(conn_id cid, time_id tid, long ms, seq_id pid);
+		bool ck_del_timer(conn_id cid, time_id tid, seq_id pid);
     bool deleteall();
     bool resetall();
 

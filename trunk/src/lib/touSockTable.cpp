@@ -1,8 +1,33 @@
 //#include "touSockTable.h"
 #include "tou.h"
 
-void sockMng::setSocketTable(struct sockaddr_in *sockettemp, int sd) {
+/******************************************************************
+ * sockTb
+ * ****************************************************************/
+sockTb::sockTb() {
+	/* touControlBlock(tc) must be initialized*/
+  CbSendBuf.setSize(TOU_MAX_CIRCULAR_BUF);
+	CbRecvBuf.setSize(TOU_MAX_CIRCULAR_BUF);
+  sc = new ssca(&tc);
+  tc.t_timeout = TOU_INIT_TIMEO;
+	duppkt.clean();
+}
 
+bool sockTb::ckHpRecvBuf(const touPkg &pkt){
+	if( (pkt.t.seq == duppkt.t.seq) && (pkt.t.ack_seq == duppkt.t.ack_seq) ){
+		return true;
+	}
+
+	duppkt = pkt; /* may have problem XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx */
+  std::cerr << "pkt not the same return false\n";
+  return false;
+}
+
+
+/******************************************************************
+ * sockMng
+ * ****************************************************************/
+void sockMng::setSocketTable(struct sockaddr_in *sockettemp, int sd) {
   boost::mutex::scoped_lock lock(soctabmutex);
   for(stbiter=SS.begin(); stbiter!=SS.end(); stbiter++) {
   if((*stbiter)->sockd == sd) {
@@ -44,7 +69,7 @@ void sockMng::setSocketTable(struct sockaddr_in *sockettemp, int sd) {
 }
 */
 
-/* plz remove all the push pop code... it takes me more than half hr to debug. */
+/* chinmay, plz remove all the push pop code... it takes me more than half hr to debug. */
 void sockMng::setSocketTableD(struct sockaddr_in *sockettemp, int sd)  {
 		boost::mutex::scoped_lock lock(soctabmutex);
 		s = getSocketTable(sd);

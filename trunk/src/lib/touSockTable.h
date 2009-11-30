@@ -2,26 +2,40 @@
  * touSockTable.h
  * This is ToU socket table & its talbe management
  *****************************************************/
- 
 #include <iostream>
 #include <string>
+#include <string.h>
 #include <vector>
+#include <queue>
+#include <deque>								
 #include <boost/asio.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 #include <boost/system/system_error.hpp>
 #include <boost/thread.hpp>
 
-
 #include "touCongestion.h"
 #include "circularBuffer.h"     //circular buffer
+#include "touHeader.h"
  
 //boost::mutex soctabmutex;
 //boost::mutex socktabmutex1;
- 
+
+/* compare the pkt by it's sequence number */
+class heapPkgComp {
+  public:
+    bool operator() (const touPkg& lhs, const touPkg& rhs) const {
+      return (lhs.t.seq >= rhs.t.seq);
+    }
+};
+typedef std::priority_queue<touPkg, std::vector<touPkg>, heapPkgComp> minPkgHeapType;
+
+
 class sockTb {
 	private:
 		boost::mutex soctabmutex;
+		touPkg	duppkt;
+
   public:
     touCb		tc;					//tcp control block
     int			sockd;			//socket file descriptor
@@ -34,24 +48,14 @@ class sockTb {
     int     tcpstate;   //state in which the connection is   
     CircularBuffer 	CbSendBuf;
     CircularBuffer 	CbRecvBuf;
+		minPkgHeapType	HpRecvBuf;
 		ssca	*sc;					//congestion control class
-
-		/* TEST */
-		int		ackcount;/* FOR TEST ONLY */
 		
-		/* touControlBlock(tc) must be initialized*/
-    sockTb() {
-      CbSendBuf.setSize(TOU_MAX_CIRCULAR_BUF);
-			CbRecvBuf.setSize(TOU_MAX_CIRCULAR_BUF);
-			sc = new ssca(&tc); 
-			tc.t_timeout = TOU_INIT_TIMEO;
-		}
+    sockTb();
+		~sockTb() {delete sc;}
+		bool ckHpRecvBuf(const touPkg &pkt);//ch if there's duplicate pkt in HpRecvBuf
 
-		~sockTb() {
-			delete sc;
-		}
-
-		void printall() {
+		void printall() { /* TEST */
 			std::cout<<"*** SOCKET TABLE RESULT ***\n";
 			std::cout<<"sockd: "<<sockd<<" sport: "<<sport<<" dport: "<<dport <<std::endl;
 			//cout<<"sip    : "<<sip<<" dip : "<<dip <<endl;

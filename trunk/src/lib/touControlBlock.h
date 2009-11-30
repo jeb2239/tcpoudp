@@ -20,18 +20,17 @@ class touCb {
       u_long            snd_nxt;                //send # next
 			u_long            rcv_nxt;                //rcv  # next
 
-      u_long						snd_ack;								//send's ack #
-      u_long            snd_w11;                //send wnd update seg seq #
-      u_long            snd_w12;                //send wnd update seg ack #
-
-      u_long            snd_wnd;                //sender's window
-      u_long            rcv_wnd;                //rcv window
+      //u_long						snd_ack;								//send's ack #
+      //u_long            snd_w11;                //send wnd update seg seq #
+      //u_long            snd_w12;                //send wnd update seg ack #
 
       /*
        *  * Additional var for this implementation
        *   */
       short				dupackcount;			//duplicate ack(should count to three)
 
+      u_long            snd_wnd;                //sender's window
+      u_long            rcv_wnd;                //rcv window
       u_long            snd_cwnd;               //congestion-controlled wnd
       u_long            snd_awnd;               //sender's advertised window from recver    
       u_long            snd_ssthresh;   		//snd_cwnd size threshold for slow start

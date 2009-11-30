@@ -1,6 +1,15 @@
+/*******************************************************************************
+ * test case
+ * revised by sol @ Nov 24, 2009
+ * ****************************************************************************/
+
 #include "tou.h"
 #include <fstream>
-#define MAXSNDBUF 1024
+#include <sys/socket.h>
+#include <netdb.h>
+
+#define MAXSNDBUF 20000 
+int isClient = 0;
 
 int assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_family, string ip, unsigned short port){
 	bzero(sockaddr, sizeof(*sockaddr));
@@ -25,22 +34,31 @@ int main(int argc, char* argv[]){
   if(argc == 4 && !strncmp( argv[3], "-c", 2)) /* ./tou 127.0.0.1 ./test_file -c */
 	{
 		cout << "Client mode.. " << endl;
+
+		/* for test */
+		isClient = 1;
+		int selectval = 0;
+
+
 		int sd,sockd;
 		int bytes_recieved; 
 		struct hostent *h;
 		//Get host name
-		if(h==gethostbyname(argv[1])) 
+		if( (h=gethostbyname(argv[1])) == NULL ) 
       printf("%s: unknown host '%s' \n", argv[0], argv[1]);
 
     //printf("%s: sending data to '%s' (IP : %s) \n", argv[0], h->h_name, inet_ntoa(*(struct in_addr *)h->h_addr_list[0]));
     
     //Set socket 1
 	  //set up Server socket info
+		//
     memset(&socket1, 0, sizeof(socket1));
+		std::cerr <<  h->h_addrtype << " " << argv[1] <<std::endl;
    	socket1.sin_family = h->h_addrtype;
-   	memcpy((char *) &socket1.sin_addr.s_addr,h->h_addr_list[0], h->h_length);
+		std::cerr <<  h->h_addr_list[0] <<std::endl;
+   	memcpy((char *) &socket1.sin_addr.s_addr, h->h_addr_list[0], h->h_length);
     socket1.sin_port = htons(1500);
-    
+
 		/* assign server's addr */
 		assignaddr(&socket1, AF_INET, "127.0.0.1", 1500);
 		std::cout<<inet_ntoa(socket1.sin_addr)<< "  " <<htons(socket1.sin_port) << std::endl;
@@ -64,9 +82,12 @@ int main(int argc, char* argv[]){
 		//set up select func socket
     fd_set socks;
  		struct timeval tim;
+		/*
  		FD_ZERO(&socks);
  		FD_SET(sockd, &socks);
- 		tim.tv_sec = 10;
+ 		tim.tv_sec = 2;
+		tim.tv_usec = 0;
+		*/
 
 		/* reading file */
 		indata.open(argv[2]); // opens the file
@@ -78,37 +99,46 @@ int main(int argc, char* argv[]){
 		//Initialize process tou
 		tm.proTou(sockd);
 
-		if( !indata.eof() ){
-			cerr << "Reading data from file: "<< argv[2] << std::endl;
-			indata.read(send_data, MAXSNDBUF);
-			readsize = indata.gcount();
-		}
 
-		cout<< " Now sending...: " << endl;
-		sendsize = tm.touSend(sockd,send_data,strlen(send_data),0);
-		cout << "Programmer think that "<<sendsize << " bytes of data has been sent \n";
-		tm.ptou->run(sockd);
+			if( !indata.eof() ) {
+			  cerr << "Reading data from file: "<< argv[2] << std::endl;
+				indata.read(send_data, MAXSNDBUF);
+				readsize = indata.gcount();
+
+        /* touSend */
+				sendsize = tm.touSend(sockd,send_data, readsize ,0);
+				std::cout << "Call touSend: Trying to send "<< readsize<< "; touSend returns "<<sendsize << " bytes. \n";
+				
+				tm.ptou->send(sockd);
+			}else {
+				 cout << " *** EOF *** \n";
+			}
+
 
 		while(1)
 		{
-			if (select(sockd+1, &socks, NULL, NULL, &tim)){
-				if( !indata.eof() ) {
-					cout<< " >>>>>> Now sending...(Inside while(1) select Loop)...: " << endl;
-					indata.read(send_data, MAXSNDBUF);
-					readsize = indata.gcount();
-					sendsize = tm.touSend(sockd,send_data,strlen(send_data),0);
-					cout<< " Now use \"touSend\". Try sending...: " << endl;
-					sendsize = tm.touSend(sockd,send_data,strlen(send_data),0);
-					cout << "Programmer think that "<<sendsize << " bytes of data has been sent \n";
-				}
+			FD_ZERO(&socks);
+			FD_SET(sockd, &socks);
+			tim.tv_sec = 1;
+			tim.tv_usec = 0;
 
+			selectval = select(sockd+1, &socks, NULL, NULL, &tim);
+			cout<< "\n >>>>>> Begin of LOOP: Inside while(1) select Loop... <<<<<< selectval: "<<selectval<< "\n"; 
+			if (selectval){
+				cout<< "processTou->RUN: recv ACK"<<endl;
 				tm.ptou->run(sockd);
-			}else {
-				 cerr << "Select timeout: Move tto touClose func!" << endl;
-				 break;
+			}else if(selectval == 0){
+				cout<< "processTou->SEND: Try to send data left in circular buff..."<<endl;
+				tm.ptou->send(sockd);
+			}else{
+				cerr << "Select timeout: Move tto touClose func!" << endl;
+				break;
 			}
+
 		} 
+
 		cerr << "While(1) LOOP over, move to touClose function now..." << endl;
+		exit(1);
 		tm.touClose(sockd);
 		/* End of Client Code */
 	
@@ -140,9 +170,6 @@ int main(int argc, char* argv[]){
 		//Check if it is tou socket
     fd_set socks;
  		struct timeval tim;
- 		FD_ZERO(&socks);
- 		FD_SET(sockd, &socks);
- 		tim.tv_sec = 4;
 
 		//Initialize processTou
 		tm.proTou(sockd);
@@ -153,20 +180,26 @@ int main(int argc, char* argv[]){
 		cout << " Accept return, "<< sd <<" , and now for the receiving part " << endl;
 
 		while(1){    
+			FD_ZERO(&socks);
+			FD_SET(sockd, &socks);
+			tim.tv_sec = 5;
+
 			if (select(sockd+1, &socks, NULL, NULL, &tim)){ //SELECT FORM WHAT TO WAHT?????????????????????????????????????????????????
 				cout << "Inside Begin of While(1), Select Looop...... " << endl;
 				tm.ptou->run(sockd);
 				
 				memset(recv_data, 0, sizeof(recv_data));
-				sd = tm.touRecv(sockd,recv_data,100,0);
-				cout << "Received Data : touRecv return -" << sd << " siseof recv buf is -"<<sizeof(recv_data) << endl;
+				sd = tm.touRecv(sockd,recv_data,MAXSNDBUF,0);
+				cout << "Received Data : touRecv return :" << sd << " siseof recv buf is :"<<sizeof(recv_data) << endl;
 			}else{
 				cout << "Done with the receiving part, move to touClose \n";
 				break;
 			}      
 		}
 	
+		
 		cout << "Inside Close...... " << endl;
+		exit(1);
 		tm.ptou->run(sockd);
 		tm.touClose(sockd);
        

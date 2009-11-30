@@ -94,7 +94,7 @@ int touMain::touConnect(int sd, struct sockaddr_in *socket1, int addrlen) {
   sm.setTCB((ackpkt.getSeq()+1), ackpkt.getSeq(),sd);
   sm.setTCBRcv(0, sd);
   sm.setTCBCwnd(2024, sd);
-  sm.setTCBAwnd(2024, sd);
+  sm.setTCBAwnd(65535, sd);
   
   ackpkt.printall();
   s->printall();
@@ -120,7 +120,8 @@ int touMain::touConnect(int sd, struct sockaddr_in *socket1, int addrlen) {
   tp.printall();
 	
 	/* update the pkt.seq to local tcp.rvc_nxt */
-  sm.setTCBRcv(tp.getSeq()+1, sd);
+  sm.setTCBRcv(tp.getSeq()+1, sd); // cli's recv seq
+	sm.setTCB(s->tc.snd_nxt, tp.getAckseq(), sd); //cli's send seq(here just update ackseq)
 
 	/* set up the fianl 3-way pkt */
   ackpkt.putHeaderSeq(s->tc.snd_nxt, s->tc.rcv_nxt);
@@ -162,7 +163,7 @@ int touMain::touAccept(int sd, struct sockaddr_in *socket2, socklen_t *addrlen) 
   sm.setTCB(randnum, randnum,sd);
   sm.setTCBRcv((u_long)0, sd);
   sm.setTCBCwnd(2024, sd);
-  sm.setTCBAwnd(2024, sd);
+  sm.setTCBAwnd(65535, sd);
   
   u_short port = (s->dport);
   cout <<"Destination :  " << s->dip << "  " << s->dport << endl;
@@ -243,42 +244,29 @@ int touMain::touSend(int sd, char *sendBufer, int len1, int flags) {
 
 /* 
  * Receive()
- * @result return no of bytes successfully received  
+ * @result return no of bytes successfully received
+ * sol revised it @ Nov 24, 2009
  */
 int touMain::touRecv(int sd, char *recvBuffer, int bufferLength, int flags) {
-    
-int rv, control=0, flagforsyn = 1;
-size_t len = sizeof(sockaddr);
-int end = 0;
-struct sockaddr_in sockaddrs;
-char buffer[bufferLength];
+	int end;
+	int readsize = 0;
+  sockTb *s = sm.getSocketTable(sd);
 
-sockTb *s = sm.getSocketTable(sd);
-s->CbRecvBuf.getAt(buffer,bufferLength,end);
-s->CbRecvBuf.remove(bufferLength);
-cout << "Received data " << buffer << endl;
-//convertToByteOrder(tp);
-tp.t.seq = s->tc.snd_nxt;
-cout << "Seq no recv : " << s->tc.snd_nxt <<"   " <<  tp.t.seq << endl;
-u_short port = (s->dport);
-assignaddr(&sockaddrs,AF_INET,s->dip,port);
-//send syn ack
-tp.t.ack_seq = tp.t.seq + strlen(buffer);
-	//  tp.t.seq = rand()%(u_long)65530;
-tp.t.seq = tp.t.seq;  	
-tp.t.syn = 0;
-tp.t.ack = 1;
-cout << "Sent ack = " << tp.t.ack_seq << endl;
-	//Code for testing begin
-rv = sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr *)&sockaddrs, sizeof(struct sockaddr_in));
-perror("send : ");
-if(s->sockstate == TOUS_CLOSE_WAIT)
-{
-  cout << " TOU Recv has received close from the remote side ..." << endl;
-  return 0;
-}
-return bufferLength;
-}
+  readsize = s->CbRecvBuf.getAt(recvBuffer,bufferLength,end);
+  s->CbRecvBuf.remove(readsize);
+
+	/* following is for test */
+	if(readsize == bufferLength)
+		std::cout << "READ complete file\n";
+	else
+		std::cout << "XXX READ partial file XXX\n";
+  
+  if(s->sockstate == TOUS_CLOSE_WAIT){
+    cout << " TOU Recv has received close from the remote side ..." << endl;
+    return 0;
+  }
+  return readsize;
+}/* End of touRecv */
 
 /* 
  * Close()

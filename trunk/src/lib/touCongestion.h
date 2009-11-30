@@ -15,10 +15,11 @@
 #define TOU_MSS				1456
 #endif
 /* TOU_SMSS should be exactly same as TOU_MSS */
-#define TOU_SMSS			TOU_MSS
-#define TOU_RMSS			TOU_MSS
+#define TOU_SMSS			1456
+#define TOU_RMSS			1456
 #define TOU_MAX_SSTHRESH	65536
-#define TOU_INIT_TIMEO		3000				//initial pkt timer out. 3000ms
+
+#define TOU_INIT_TIMEO		3000				//initial pkt timer out. 3000ms, 3sec
 #define TOU_MAX_CIRCULAR_BUF	40960		//TOU's circular buffer size: 40k
 
 /* Congestion Control Window States */

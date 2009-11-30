@@ -63,9 +63,9 @@ int ssca::addwnd() {
 }/* end of ssca::addwnd() */
 
 u_long ssca::getwnd() {
-	tb->snd_cwnd = std::min(tb->snd_cwnd, tb->snd_awnd);
-	tb->snd_cwnd = ckSize(tb->snd_cwnd);
-	return tb->snd_cwnd;
+	tb->snd_wnd = std::min(tb->snd_cwnd, tb->snd_awnd);
+	tb->snd_wnd = ckSize(tb->snd_wnd);
+	return tb->snd_wnd;
 }
 
 /* set wnd while time out 
@@ -128,6 +128,7 @@ int ssca::setdwnd() {
 			break;
 
 		case TOU_CC_FR:
+			tb->dupackcount++;
 			tb->snd_cwnd += TOU_SMSS;
 			tb->snd_cwnd = ckSize(tb->snd_cwnd);
 			break;

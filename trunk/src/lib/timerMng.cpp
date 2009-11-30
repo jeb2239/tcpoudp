@@ -47,6 +47,14 @@ bool timerMng::delete_timer(conn_id cid, time_id tid, seq_id pid){
 		std::cout<< " *** Add del Anchor cid: "<<cid <<" seq_id: "<< pid<<" TID: "<<tid<<" *** "<<std::endl;
 }
 
+/*********************************************
+ * check if there's already a del timer in the
+ * del_timer queue
+ * ******************************************/
+bool timerMng::ck_del_timer(conn_id cid, time_id tid, seq_id pid){
+	return timercker->ckTimer(cid, tid, pid);
+}
+
 bool timerMng::reset(conn_id cid, time_id tid, seq_id pid){
 
 }

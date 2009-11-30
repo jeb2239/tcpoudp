@@ -10,7 +10,7 @@
 
 
 /***************************************************
- * TOU HEADER
+ *8 TOU HEADER
  * The size of the fixed ToU  header is 16 bytes, 
  * whereas the size of fixed TCP header is 20 bytes.
  * The fixed ToU header and UDP header have a cumulative 
@@ -44,6 +44,7 @@ class touPkg {
 		touHeader	t;
 		char			buf[TOU_MSS];
 
+		touPkg(){}
 		/* default constructor would new a pkg with TOU_MAX */
 		/*touPkg(){ buf = new char[TOU_MAX]; }
 		 specified what size you want assign to payload */
@@ -64,6 +65,24 @@ class touPkg {
 			t.mag = 0x7194B32E;
 		}
 
+		int clean(){
+			t.seq = 0;
+			t.mag = 0x7194B32E;
+			t.ack_seq = 0;
+			t.doff = 0;
+			t.dres = 0;
+			t.res = 0;
+			t.cwr = 0;
+			t.ece = 0;
+			t.ack = 0;
+			t.psh = 0;
+			t.rst = 0;
+			t.syn = 0;
+			t.fin = 0;
+			t.window = 0;
+			memset(buf, 0, TOU_MSS);
+		}
+
 		void printall(){
 			std::cout<< "### Packet ###\n";
 			std::cout<< "SEQ: "<< (t.seq) << " SEQ_ACK: "<< (t.ack_seq) <<std::endl;
@@ -77,5 +96,4 @@ class touPkg {
 		unsigned long getAckseq(){
 			return (t.ack_seq);
 		}
-
 };

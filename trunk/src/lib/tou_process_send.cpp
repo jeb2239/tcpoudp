@@ -72,7 +72,7 @@ int touProcessSend::assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_fami
 	sndsize=((socktb->tc.snd_una + curwnd)-socktb->tc.snd_nxt);
 	cout <<" "<< sndsize<<std::endl;
 	while( (0 < socktb->CbSendBuf.getTotalElements() ) && (0 < ( sndsize=((socktb->tc.snd_una + curwnd)- socktb->tc.snd_nxt)))) {
-	  toupkg.putHeaderSeq(socktb->tc.snd_nxt, socktb->tc.snd_ack);
+	  toupkg.putHeaderSeq(socktb->tc.snd_nxt, socktb->tc.rcv_nxt);
 	  if( sndsize >= TOU_SMSS ){
 	    //available size is bigger than MSS, so send size of SMSS at most
 		len = popsndq(socktb, toupkg.buf, TOU_SMSS); //sizeof(toupkg.buf) should be the same as TOU_SMS

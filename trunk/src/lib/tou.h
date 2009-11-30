@@ -11,7 +11,7 @@
 //Types
 typedef	unsigned long 	u_long;
 typedef	unsigned short	u_short;
-typedef unsigned char	u_char;
+typedef unsigned char		u_char;
 
 //Timers
 #define TOUT_TIMERS			4
@@ -61,6 +61,10 @@ typedef unsigned char	u_char;
 /***************************************************
  * Include from self-define header
  **************************************************/
+
+/* for test */
+extern int isClient; 
+
 #include "timer.h"				//tou timer library
 #include "processtou.h"
 #include "trace.h"				//for debug
