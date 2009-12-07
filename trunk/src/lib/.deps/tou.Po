@@ -98,7 +98,10 @@ tou.o tou.o: tou.cpp tou.h /usr/include/stdio.h /usr/include/features.h \
   /usr/include/c++/4.2/bits/stl_vector.h \
   /usr/include/c++/4.2/bits/stl_bvector.h \
   /usr/include/c++/4.2/bits/vector.tcc timer.h touSockTable.h \
-  /usr/include/c++/4.2/iostream \
+  /usr/include/c++/4.2/iostream /usr/include/c++/4.2/queue \
+  /usr/include/c++/4.2/deque /usr/include/c++/4.2/bits/stl_deque.h \
+  /usr/include/c++/4.2/bits/deque.tcc \
+  /usr/include/c++/4.2/bits/stl_queue.h \
   ../../boostlib/boost_1_40_0/boost/asio.hpp \
   ../../boostlib/boost_1_40_0/boost/asio/basic_datagram_socket.hpp \
   ../../boostlib/boost_1_40_0/boost/asio/detail/push_options.hpp \
@@ -823,10 +826,6 @@ tou.o tou.o: tou.cpp tou.h /usr/include/stdio.h /usr/include/features.h \
   ../../boostlib/boost_1_40_0/boost/thread/pthread/shared_mutex.hpp \
   ../../boostlib/boost_1_40_0/boost/thread/barrier.hpp touCongestion.h \
   touControlBlock.h circularBuffer.h touHeader.h \
-  /usr/include/c++/4.2/queue /usr/include/c++/4.2/deque \
-  /usr/include/c++/4.2/bits/stl_deque.h \
-  /usr/include/c++/4.2/bits/deque.tcc \
-  /usr/include/c++/4.2/bits/stl_queue.h \
   ../../boostlib/boost_1_40_0/boost/date_time/posix_time/posix_time.hpp \
   ../../boostlib/boost_1_40_0/boost/date_time/posix_time/time_formatters.hpp \
   ../../boostlib/boost_1_40_0/boost/date_time/gregorian/gregorian.hpp \
@@ -966,7 +965,7 @@ tou.o tou.o: tou.cpp tou.h /usr/include/stdio.h /usr/include/features.h \
   ../../boostlib/boost_1_40_0/boost/date_time/posix_time/time_period.hpp \
   ../../boostlib/boost_1_40_0/boost/date_time/posix_time/posix_time_duration.hpp \
   ../../boostlib/boost_1_40_0/boost/date_time/posix_time/time_parsers.hpp \
-  ../../boostlib/boost_1_40_0/boost/timer.hpp trace.h processtou.h \
+  ../../boostlib/boost_1_40_0/boost/timer.hpp processtou.h \
   ../../boostlib/boost_1_40_0/boost/bimap.hpp \
   ../../boostlib/boost_1_40_0/boost/bimap/bimap.hpp \
   ../../boostlib/boost_1_40_0/boost/bimap/detail/user_interface_config.hpp \
@@ -1259,7 +1258,7 @@ tou.o tou.o: tou.cpp tou.h /usr/include/stdio.h /usr/include/features.h \
   ../../boostlib/boost_1_40_0/boost/bimap/views/unconstrained_map_view.hpp \
   ../../boostlib/boost_1_40_0/boost/bimap/views/unconstrained_set_view.hpp \
   ../../boostlib/boost_1_40_0/boost/bimap/support/map_type_by.hpp \
-  ../../boostlib/boost_1_40_0/boost/bimap/support/map_by.hpp
+  ../../boostlib/boost_1_40_0/boost/bimap/support/map_by.hpp trace.h
 
 tou.h:
 
@@ -1584,6 +1583,16 @@ timer.h:
 touSockTable.h:
 
 /usr/include/c++/4.2/iostream:
+
+/usr/include/c++/4.2/queue:
+
+/usr/include/c++/4.2/deque:
+
+/usr/include/c++/4.2/bits/stl_deque.h:
+
+/usr/include/c++/4.2/bits/deque.tcc:
+
+/usr/include/c++/4.2/bits/stl_queue.h:
 
 ../../boostlib/boost_1_40_0/boost/asio.hpp:
 
@@ -3087,16 +3096,6 @@ circularBuffer.h:
 
 touHeader.h:
 
-/usr/include/c++/4.2/queue:
-
-/usr/include/c++/4.2/deque:
-
-/usr/include/c++/4.2/bits/stl_deque.h:
-
-/usr/include/c++/4.2/bits/deque.tcc:
-
-/usr/include/c++/4.2/bits/stl_queue.h:
-
 ../../boostlib/boost_1_40_0/boost/date_time/posix_time/posix_time.hpp:
 
 ../../boostlib/boost_1_40_0/boost/date_time/posix_time/time_formatters.hpp:
@@ -3376,8 +3375,6 @@ touHeader.h:
 ../../boostlib/boost_1_40_0/boost/date_time/posix_time/time_parsers.hpp:
 
 ../../boostlib/boost_1_40_0/boost/timer.hpp:
-
-trace.h:
 
 processtou.h:
 
@@ -3966,3 +3963,5 @@ processtou.h:
 ../../boostlib/boost_1_40_0/boost/bimap/support/map_type_by.hpp:
 
 ../../boostlib/boost_1_40_0/boost/bimap/support/map_by.hpp:
+
+trace.h:

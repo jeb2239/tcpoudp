@@ -92,7 +92,10 @@ timerMng.o timerMng.o: timerMng.cpp timer.h touSockTable.h \
   /usr/include/c++/4.2/bits/istream.tcc /usr/include/c++/4.2/vector \
   /usr/include/c++/4.2/bits/stl_vector.h \
   /usr/include/c++/4.2/bits/stl_bvector.h \
-  /usr/include/c++/4.2/bits/vector.tcc \
+  /usr/include/c++/4.2/bits/vector.tcc /usr/include/c++/4.2/queue \
+  /usr/include/c++/4.2/deque /usr/include/c++/4.2/bits/stl_deque.h \
+  /usr/include/c++/4.2/bits/deque.tcc \
+  /usr/include/c++/4.2/bits/stl_queue.h \
   ../../boostlib/boost_1_40_0/boost/asio.hpp \
   ../../boostlib/boost_1_40_0/boost/asio/basic_datagram_socket.hpp \
   ../../boostlib/boost_1_40_0/boost/asio/detail/push_options.hpp \
@@ -824,10 +827,6 @@ timerMng.o timerMng.o: timerMng.cpp timer.h touSockTable.h \
   ../../boostlib/boost_1_40_0/boost/thread/pthread/shared_mutex.hpp \
   ../../boostlib/boost_1_40_0/boost/thread/barrier.hpp touCongestion.h \
   touControlBlock.h circularBuffer.h touHeader.h \
-  /usr/include/c++/4.2/queue /usr/include/c++/4.2/deque \
-  /usr/include/c++/4.2/bits/stl_deque.h \
-  /usr/include/c++/4.2/bits/deque.tcc \
-  /usr/include/c++/4.2/bits/stl_queue.h \
   ../../boostlib/boost_1_40_0/boost/date_time/posix_time/posix_time.hpp \
   ../../boostlib/boost_1_40_0/boost/date_time/posix_time/time_formatters.hpp \
   ../../boostlib/boost_1_40_0/boost/date_time/gregorian/gregorian.hpp \
@@ -1256,6 +1255,16 @@ touSockTable.h:
 /usr/include/c++/4.2/bits/stl_bvector.h:
 
 /usr/include/c++/4.2/bits/vector.tcc:
+
+/usr/include/c++/4.2/queue:
+
+/usr/include/c++/4.2/deque:
+
+/usr/include/c++/4.2/bits/stl_deque.h:
+
+/usr/include/c++/4.2/bits/deque.tcc:
+
+/usr/include/c++/4.2/bits/stl_queue.h:
 
 ../../boostlib/boost_1_40_0/boost/asio.hpp:
 
@@ -2792,16 +2801,6 @@ touControlBlock.h:
 circularBuffer.h:
 
 touHeader.h:
-
-/usr/include/c++/4.2/queue:
-
-/usr/include/c++/4.2/deque:
-
-/usr/include/c++/4.2/bits/stl_deque.h:
-
-/usr/include/c++/4.2/bits/deque.tcc:
-
-/usr/include/c++/4.2/bits/stl_queue.h:
 
 ../../boostlib/boost_1_40_0/boost/date_time/posix_time/posix_time.hpp:
 
