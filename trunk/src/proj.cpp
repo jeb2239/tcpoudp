@@ -100,19 +100,19 @@ int main(int argc, char* argv[]){
 		tm.proTou(sockd);
 
 
-			if( !indata.eof() ) {
-			  cerr << "Reading data from file: "<< argv[2] << std::endl;
-				indata.read(send_data, MAXSNDBUF);
-				readsize = indata.gcount();
+		if( !indata.eof() ) {
+		  cerr << "Reading data from file: "<< argv[2] << std::endl;
+			indata.read(send_data, MAXSNDBUF);
+			readsize = indata.gcount();
 
-        /* touSend */
-				sendsize = tm.touSend(sockd,send_data, readsize ,0);
-				std::cout << "Call touSend: Trying to send "<< readsize<< "; touSend returns "<<sendsize << " bytes. \n";
-				
-				tm.ptou->send(sockd);
-			}else {
-				 cout << " *** EOF *** \n";
-			}
+      /* touSend */
+			sendsize = tm.touSend(sockd,send_data, readsize ,0);
+			std::cout << "Call touSend: Trying to send "<< readsize<< "; touSend returns "<<sendsize << " bytes. \n";
+			
+			tm.ptou->send(sockd);
+		}else {
+			 cout << " *** EOF *** \n";
+		}
 
 
 		while(1)
@@ -128,10 +128,9 @@ int main(int argc, char* argv[]){
 				cout<< "processTou->RUN: recv ACK"<<endl;
 				tm.ptou->run(sockd);
 			}else if(selectval == 0){
-				cout<< "processTou->SEND: Try to send data left in circular buff..."<<endl;
-				tm.ptou->send(sockd);
-			}else{
 				cerr << "Select timeout: Move tto touClose func!" << endl;
+				break;
+			}else{
 				break;
 			}
 
