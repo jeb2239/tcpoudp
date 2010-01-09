@@ -1,7 +1,7 @@
-/************************************************************************
+/******************************************************************************
  * timer.h
  * Here configure the Project inclusions, definitions, and variables 
- *************************************************************************/
+ *****************************************************************************/
 #include "touSockTable.h"
 #include <unistd.h>
 #include <time.h>
@@ -10,21 +10,29 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/timer.hpp>
 
-/* time that timer would wait for each cking */
+/* time that timer would wait for each cking loop*/
 #define TIMER_WT	500
 
-/* associate with sock file descriptor */
+/* type ofr socket file descriptor */
 typedef unsigned int conn_id;
-/* associate with connection sequecne number */
+/* type for connection sequence number */
 typedef unsigned long seq_id;
 /* timer id, reserved */
 typedef unsigned int time_id;
-
 extern boost::mutex timermutex;
+
+/**
+ * return the current time in long 
+ */
 long getCurMs();
 
-/* node of the heap with initialization
- * the data and seq are sotred in this node too */
+/**
+ * node_t is a timer node which is stored in timer heap tree
+ * it contains conn_id: socket file descriptor
+ *						 timer_id: reserved
+ *						 seq_id: connection sequence number
+ *						 pl: payload
+ */
 class node_t {
   public:
     node_t(){
@@ -37,31 +45,41 @@ class node_t {
 			std::cerr<<"shouldn't use  node_t with specifying ms";};
 		node_t(conn_id c, time_id t, seq_id p, sockTb *s, char *pl)
 			:c_id(c), t_id(t), p_id(p), st(s) {
-			payload = new char[strlen(pl)];
-      std::cout << "timer node built ..sockfd is: "<<c<<" sizeof payload is : " << strlen(pl) <<" socktb->tc.snd_ack: "<<st->tc.rcv_nxt <<std::endl;
-			strncpy(payload, pl, strlen(pl));
+		  payload = new std::string(pl);
+      std::cout << "timer node built ..sockfd is: "<<c<<" sizeof payload is : " 
+				<< payload->size() <<" socktb->tc.snd_ack: "<<st->tc.rcv_nxt <<std::endl;
+			ms = getCurMs() + s->tc.t_timeout;
+			};
+		node_t(conn_id c, time_id t, seq_id p, sockTb *s, std::string *pl)
+			:c_id(c), t_id(t), p_id(p), st(s) {
+		  payload = new std::string(*pl);
+      std::cout << "timer node built ..sockfd is: "<<c<<" sizeof payload is : " 
+				<< payload->size() <<" socktb->tc.snd_ack: "<<st->tc.rcv_nxt <<std::endl;
 			ms = getCurMs() + s->tc.t_timeout;
 			};
 
-		~node_t(){ /*delete payload;*/ };
+		~node_t(){ 
+			delete payload; 
+		};
 
     conn_id	c_id;
     time_id	t_id;
     seq_id	p_id;
 		sockTb *st;
-		char *payload;
+		std::string *payload;
 		long  ms;
 };
 
-/* compares the lhs and rhs of the heap 
- * HERE ADD CID(connection id - sockfd) and PID
- * (pkt sequence number) FOR MULTIPLE CONNECTIONS */
+/**
+ * heapComp for timer heap tree comparison 
+ * compares the lhs and rhs of the heap node
+ */
 class heapComp {
   public:
     bool operator() (const node_t& lhs, const node_t& rhs) const {
 		  if((lhs.ms==rhs.ms)) {
 				if(lhs.c_id == rhs.c_id){
-					return (lhs.p_id >= rhs.p_id);	/* NOTE Rotation XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
+					return (lhs.p_id >= rhs.p_id);	/* NOTE Rotation XXXX*/
 				}
 		    return((lhs.c_id >= rhs.c_id));
 		  }else{
@@ -70,34 +88,51 @@ class heapComp {
     }
 };
 
+/* typedef tiemr heap tree */
 typedef std::priority_queue<node_t, std::vector<node_t>, heapComp> minTmHeapType;
+/* typedef timer deletion deque */
 typedef std::deque<node_t> timerDequeType;
+/* tiemr heap tree, which is implemented in priority_queue(min-heap) */
+extern minTmHeapType timerheap;
+/* timer deletion deque, which is implemented in deque */
+extern timerDequeType timerdeque;
 
-extern minTmHeapType timerheap;		// STL, Priority_queue(min-heap)
-extern timerDequeType timerdeque;	// STL, Queue
-
+/**
+ * timerCk is timer thread that running at the beginning of program
+ * it's operated by timerMng
+ */
 class timerCk {
   public:
+		/* constructor
+		 * initiate a new thread
+		 */
     timerCk() 
       :m_thread(boost::bind(&timerCk::doit,this)){
       std::cout << "*** timerCk built *** " << std::endl;	  
     };
 
+		/* deconstructor
+		 * follow RAII designed pattern: recycling and self-managment
+		 */
     ~timerCk(){
       std::cout << "*** timerCk recycled *** " << std::endl;
-
-			//delete nt;
-      m_thread.join(); // RAII designed pattern, recycling self-managment
+      m_thread.join();
 		};
 
-		//create new node and push it in the vector
+		/* addDelNode
+		 * this function create new deletion node and add newly generated
+		 * node into tdv queue
+		 */
     bool addDelNode(conn_id cid, time_id tid, seq_id pid){
       nt = new node_t(cid, tid, pid);
       tdv.push_back(*nt);
       return true;
     }
 
-		//check the vector if match found, delete the pair
+		/* check the tdv queue to see whether there exist a deletion node
+		 * if find one, delete the pair
+		 * @result true if the node is found
+		 */
     inline bool ckTimerDel(conn_id cid, time_id tid, seq_id pid){
       for(it=tdv.begin(); it<tdv.end(); it++) {
 				if ((it->c_id == cid) && (it->t_id == tid) &&(it->p_id == pid)) {
@@ -108,7 +143,9 @@ class timerCk {
       return false;
     }
 
-		//jsut ck the vector whether there'a specific timer or not
+		/* check the vector whether there exists an timer
+		 * @result true if node is found
+		 */
 		bool ckTimer(conn_id cid, time_id tid, seq_id pid){
       for(it=tdv.begin(); it<tdv.end(); it++) {
 				if ((it->c_id == cid) && (it->t_id == tid) &&(it->p_id == pid))
@@ -123,8 +160,11 @@ class timerCk {
 	  struct sockaddr_in sockaddrs;
 		int assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_family, std::string ip, unsigned short port);
 
-		/* timer deletion queue, node in here needs to be used as registered node to
-		 * revoke the node in priority_queue while timer node in priority_queue is fired */
+		/* timer deletion queue
+		 * nodes here as notification of given nodes are deleted. So while timer
+		 * has an expired node finds there already exists an deletion node here.
+		 * timer pops the expired node without further reaction.
+		 */
     std::vector<node_t> tdv;
     std::vector<node_t>::iterator it;
 
@@ -132,12 +172,17 @@ class timerCk {
     boost::thread m_thread;
 };
 
+/**
+ * timerMng
+ * timerMng is responsible for timer management. All the operation related to
+ * timer should be operated through timerMng
+ */
 class timerMng {
   public:
     timerMng();
-    ~timerMng(){ /*delete timercker;*/ };
+    ~timerMng(){};
     bool add(conn_id cid, time_id tid, seq_id pid, long ms);
-    bool add(conn_id cid, time_id tid, seq_id pid, sockTb *st, char *payload);
+    bool add(conn_id cid, time_id tid, seq_id pid, sockTb *st, std::string *payload);
     bool delete_timer(conn_id cid, time_id tid, seq_id pid);
     bool reset(conn_id cid, time_id tid, seq_id pid);
     bool reset(conn_id cid, time_id tid, long ms, seq_id pid);
@@ -149,3 +194,4 @@ class timerMng {
     node_t *timernode;
     timerCk *timercker;	//thread for cking next-fired timer
 };
+

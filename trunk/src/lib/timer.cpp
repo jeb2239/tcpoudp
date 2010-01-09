@@ -1,28 +1,27 @@
 #include "timer.h"
-
+/**
+ * A periodic loop function for cheing fired timer in timer thread.
+ */
 void timerCk::doit(){
-  //mutex the current resrouces, and ck if there's a timer fired
 	boost::asio::io_service io;
 	boost::asio::deadline_timer t(io, boost::posix_time::milliseconds(TIMER_WT));
 	int bufsize;
 	
   while(1){
-    if( (!timerheap.empty()) &&	(timerheap.top().ms <=  getCurMs()) ) {
+		// loop activated if there is timer node in timer heap and timer is fired
+    while( !timerheap.empty() && (timerheap.top().ms <= getCurMs()) ){
       boost::mutex::scoped_lock lock(timermutex);
-      if( !ckTimerDel(timerheap.top().c_id, timerheap.top().t_id, timerheap.top().p_id) && 
-					((timerheap.top().p_id >= timerheap.top().st->tc.snd_una) && (timerheap.top().c_id == timerheap.top().st->sockd)) ){
-				//not in the del vector, so this fire node needs to be handled.
-				//rexmitting this pkt, and reset the timer again.
-				touPkg toupkt;//(sizeof(*(timerheap.top().payload)));
-				toupkt.clean();
-				if( TOU_MSS < (bufsize = (strlen(timerheap.top().payload)))) bufsize = TOU_MSS;
-				
+			// check if there's record in del vector
+			// if yes, pop and discard the fired timer
+			// if no, handle the fired timer(rexmit and reset timer)
+      if( !ckTimerDel(timerheap.top().c_id, timerheap.top().t_id, timerheap.top().p_id) &&
+					((timerheap.top().p_id >= timerheap.top().st->tc.snd_una) &&
+					(timerheap.top().c_id == timerheap.top().st->sockd)) ){
+				bufsize = timerheap.top().payload->size();
+				touPkg toupkt(timerheap.top().payload->c_str(), bufsize);
 				toupkt.putHeaderSeq((timerheap.top().p_id - bufsize), timerheap.top().st->tc.rcv_nxt);
 				toupkt.t.ack = FLAGON;
-				strncpy(toupkt.buf, timerheap.top().payload, bufsize);
-
 				assignaddr(&sockaddrs, AF_INET, timerheap.top().st->dip, timerheap.top().st->dport);
-				//sending...
 				sendto(timerheap.top().c_id, &toupkt, sizeof(toupkt), 0, (struct sockaddr *)&sockaddrs, sizeof(sockaddr));
 
 				//reset the timer
@@ -30,15 +29,18 @@ void timerCk::doit(){
 				timerheap.push(*nt);
 
 				/* for test */
-        
-				std::cerr<< "Timer not in delqueue and fired c_id:"<<timerheap.top().c_id <<" "<< timerheap.top().p_id <<" timer id : " <<timerheap.top().t_id << " fired."<< "CurTime: "<<getCurMs()<<"; Timer: "<<timerheap.top().ms<<"Buffer size: "<< bufsize << " Buffer: "<< toupkt.buf <<std::endl;
-      }	
-      timerheap.pop();
-    }else{
-			/* synchronous wait for TIMER_WT ms */
-			t.wait();
+				std::cerr<< "Timer not in delqueue and fired c_id:"<<timerheap.top().c_id <<" "
+					<< timerheap.top().p_id <<" timer id : " <<timerheap.top().t_id << " fired."
+					<< "CurTime: "<<getCurMs()<<"; Timer: "<<timerheap.top().ms<<"Buffer size: "<< 
+					bufsize << " Buffer: "<< toupkt.buf <<std::endl;
+				/* end of for test */
+				}	
+				timerheap.pop();
     }
-  }//End of while
+		//synchronous wait for TIMER_WT ms
+		t.wait();
+    
+  }//End of while(1)
 }
 
 /* for assign sockaddr */

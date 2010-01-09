@@ -2,7 +2,7 @@
  * tou.h
  * This is ToU library header file. User who wants to 
  * use ToU library functions hould include this header 
- * file once and only.
+ * file.
  *****************************************************/
  
 /******************************************************
@@ -11,21 +11,28 @@
 //Types
 typedef	unsigned long 	u_long;
 typedef	unsigned short	u_short;
-typedef unsigned char		u_char;
+typedef unsigned char	u_char;
 
-//Timers
+/*
+ *Timers
+ */
 #define TOUT_TIMERS			4
 #define TOUT_REXMIT			0
 #define TOUT_PERSIST		1
 #define TOUT_KEEP			2
 #define TOUT_2MSL			3
 
-//Ethernet 1500-20-24
+/*
+ *Ethernet 1500-20-24
+ */
 #ifndef TOU_MSS
-#define TOU_MSS				1456
+	#define TOU_MSS				1456
 #endif
 
-//Status
+/*
+ *Status
+ */
+
 #define TOUS_CLOSED			0
 #define TOUS_LISTEN			1
 #define TOUS_SYN_SENT		2
@@ -54,6 +61,7 @@ typedef unsigned char		u_char;
 #include <sstream>
 
 #include <vector>
+#include <string>
 /***************************************************
  * Include from BOOST library
  **************************************************/
@@ -62,34 +70,34 @@ typedef unsigned char		u_char;
  * Include from self-define header
  **************************************************/
 
-/* for test */
-extern int isClient; 
-
 #include "timer.h"				//tou timer library
 #include "processtou.h"
 #include "trace.h"				//for debug
 
-//#include "touHeader.h"			//tou header & header mng
-//#include "touSockTable.h"
-//#include "touCongestion.h"
-
-
 extern FILE *_fptrace;
 extern timerMng tm1;
+extern boost::shared_ptr<boost::thread> m_thread;
 
 /******************************************************
  * tou main class
  * ***************************************************/
 class touMain {
 	private:
+	/* socket descriptor */
   int sd;
-  int yes;
+
   /* for sending: pushing data into circular buf */
 	int pushsndq(int sockfd, char *sendbuf, int &len);
 	
 	public:
+  touMain() : sm() {
+  }
+
+	/* tou packet */
   touPkg tp;
-	/* TOU socket table management */
+	/* 
+	 *TOU socket table management 
+	 */
   sockMng sm;
   processTou *ptou;	/* process TOU*/	
 	int touSocket(int , int , int );
@@ -109,5 +117,39 @@ class touMain {
 	void convertFromByteOrder(touPkg&);
 	int timero(int , int);
 	int assignaddr(struct sockaddr_in *, sa_family_t , std::string , u_short);
-	
+	void dothis(int );
 };	
+
+/*
+ *Close Thread
+ *@params socket descriptor
+ */
+class closer {
+  public:
+   closer(int sd) 
+      :m_thread1(boost::bind(&closer::dothis,this,sd)){
+     
+      std::cout << "*** closer thread started*** " << std::endl;
+      
+    }
+    
+    int clientClose(int sd);
+    int serverClose(int sd); 
+    void dothis(int sd); 
+    void go();
+    void startthread();
+    ~closer(){
+      std::cout << "*** closer recycled *** " << std::endl;
+      m_thread1.join(); 
+		}
+    int sd;
+	int assignaddr(struct sockaddr_in *, sa_family_t , std::string , u_short);
+	timerCk *timercker1;
+	boost::thread m_thread1;
+
+	private:
+    sockMng sm;
+    touPkg tp;
+
+};
+

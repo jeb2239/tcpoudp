@@ -17,41 +17,41 @@
 #include "touCongestion.h"
 #include "circularBuffer.h"     //circular buffer
 #include "touHeader.h"
- 
+
 //boost::mutex soctabmutex;
 //boost::mutex socktabmutex1;
 
 /* compare the pkt by it's sequence number */
 class heapPkgComp {
-  public:
-    bool operator() (const touPkg& lhs, const touPkg& rhs) const {
-      return (lhs.t.seq >= rhs.t.seq);
-    }
+	public:
+		bool operator() (const touPkg& lhs, const touPkg& rhs) const {
+			return (lhs.t.seq >= rhs.t.seq);
+		}
 };
-typedef std::priority_queue<touPkg, std::vector<touPkg>, heapPkgComp> minPkgHeapType;
 
+typedef std::priority_queue<touPkg, std::vector<touPkg>, heapPkgComp> minPkgHeapType;
 
 class sockTb {
 	private:
 		boost::mutex soctabmutex;
 		touPkg	duppkt;
 
-  public:
-    touCb		tc;					//tcp control block
-    int			sockd;			//socket file descriptor
+	public:
+		touCb		tc;					//tcp control block
+		int			sockd;			//socket file descriptor
 		int			sockstate;  //SOCK_CREATED, BIND, LISTEN, CONNECT, ESTABLISHED, TERMINATING
-    u_short	sport;
-    u_short dport;      //destination port
+		u_short	sport;
+		u_short dport;      //destination port
 		std::string  sip;
 		std::string  dip;		//destination ip 
-    int			cid;				//connection id. probably dont need it
-    int     tcpstate;   //state in which the connection is   
-    CircularBuffer 	CbSendBuf;
-    CircularBuffer 	CbRecvBuf;
+		int			cid;				//connection id. probably dont need it
+		int     tcpstate;   //state in which the connection is   
+		CircularBuffer 	CbSendBuf;
+		CircularBuffer 	CbRecvBuf;
 		minPkgHeapType	HpRecvBuf;
 		ssca	*sc;					//congestion control class
-		
-    sockTb();
+		int pfd[2];
+		sockTb();
 		~sockTb() {delete sc;}
 		bool ckHpRecvBuf(const touPkg &pkt);//ch if there's duplicate pkt in HpRecvBuf
 
@@ -73,28 +73,28 @@ class sockTb {
 extern std::vector<sockTb*> SS;
 
 class sockMng {
-		public :
-			sockMng() {s = new sockTb();}
-			struct sockTb* getSocketTable(int);
-			void setSocketTable(struct sockaddr_in *, int);
-			void setSocketTableD(struct sockaddr_in *, int); 
-			void setSocketTable(int );
-			void delSocketTable(int );
-			void setSocketState(int , int);
+	public :
+		sockMng() {s = new sockTb();}
+		struct sockTb* getSocketTable(int);
+		void setSocketTable(struct sockaddr_in *, int);
+		void setSocketTableD(struct sockaddr_in *, int); 
+		void setSocketTable(int );
+		void delSocketTable(int );
+		void setSocketState(int , int);
 
-			void setTCBState(int, int);												/* set tcb's congestion state */
-			void setTCB(unsigned long ,unsigned long ,  int);	/* set snd_nxt, snd_una */
-			void setTCBCwnd(unsigned long, int);							/* set snd_cwnd */
-			void setTCBAwnd(unsigned long, int);							/* set snd_awnd */
-			void setTCBRcv(unsigned long, int);								/* set rcv_nxt in socket table */
+		void setTCBState(int, int);												/* set tcb's congestion state */
+		void setTCB(unsigned long ,unsigned long ,  int);	/* set snd_nxt, snd_una */
+		void setTCBCwnd(unsigned long, int);							/* set snd_cwnd */
+		void setTCBAwnd(unsigned long, int);							/* set snd_awnd */
+		void setTCBRcv(unsigned long, int);								/* set rcv_nxt in socket table */
 
-      /* insert data, data's len */ 
-			int setCbData(char *, int, int);
-		private:
-			sockTb *s;
-			std::vector<sockTb*>::iterator stbiter;
-			boost::mutex soctabmutex;
+		/* insert data, data's len */ 
+		int setCbData(char *, int, int);
+	private:
+		sockTb *s;
+		std::vector<sockTb*>::iterator stbiter;
+		boost::mutex soctabmutex;
 
-			/* for test */
-			void setSocketTable(struct sockaddr_in *, int sockfd, char * ip, unsigned short port);
+		/* for test */
+		void setSocketTable(struct sockaddr_in *, int sockfd, char * ip, unsigned short port);
 };

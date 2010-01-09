@@ -1,7 +1,7 @@
 /*********************************************************
  * processtou.h
- * io management for receive
- * 
+ * sending/receiving via circular buffer for tou 
+ * send and recv function.
  * ******************************************************/
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
@@ -12,6 +12,15 @@
 #include <boost/timer.hpp>
 #include <boost/system/system_error.hpp>
 #include <string>
+
+#define PROCESS_END 0
+#define PROCESS_SYN 1
+#define PROCESS_FIN 2
+#define PROCESS_ACK_WITHOUT_DATA 3
+#define PROCESS_ACK_WITH_DATA_MATCH_EXPECTED_SEQ 4
+#define PROCESS_ACK_WITH_DATA_LESS_EXPECTED_SEQ 5
+#define PROCESS_ACK_WITH_DATA_MORE_EXPECTED_SEQ 6
+#define PROCESS_ACK_DATARECSUCC_SENDBACK_ACK 7
 
 /* compare the pkt by it's sequence number */
 /*class heapPkgComp {
@@ -34,24 +43,36 @@ class processTou {
 		}
     processTou(int sd){
 			std::cout<< "*** processTou(int sd) is activized now ***\n";
-      sockfd = sd;      
-      //run(sockfd);
-      
+			sockfd = sd;
     }
+		/**
+		 * contructor
+		 * should adopt this constructor in updated code 
+		 */
 		processTou(int sd, sockMng *sockmng, touPkg *toupkg){
 			std::cout<< "*** processTou(int sd, sockMng *sm) is activized now ***\n";
 			sockfd = sd;
-			tp = toupkg;
 			sm = sockmng;
 			recovery = false;
-			sndack = true;
-      //run(sockfd);
 		}
+		/**
+		 * destructor
+		 */
     ~processTou(){ 
 			 std::cout << "*** processTou is recycled *** " << std::endl;
 		}
 
+		/**
+		 * receiving pkt from underlying layer and handle the pkt
+		 * 1. update socket table 
+		 * 2. put pkts into circular buffer
+		 * 3. recovery duplicated pkts
+		 */
     void run(int );
+
+		/**
+		 * sending pkt from circular buffer to network
+		 */
 		void send(int sockfd);
   private:
     int										sockfd;
@@ -60,9 +81,9 @@ class processTou {
 		touPkg								*tp;
     struct sockaddr_in		sockaddrs;
 		bool									recovery;     //recovery mode or not
-		bool									sndack;
 
 		int popsndq(sockTb *socktb, char *sendbuf, int len);
-		int putcircbuf(sockTb *socktb, int sockfd, char *buf, int rvpl);
+		int putcircbuf(sockTb *socktb, int sockfd, std::string  *buf, int rvpl);
+		int processGetPktState(touPkg *pkt);
 		int assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_family, std::string ip, unsigned short port);
 };

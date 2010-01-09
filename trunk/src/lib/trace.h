@@ -32,7 +32,7 @@ inline void TRACE(int level, char* format, ...) {
   unsigned int uc;
   string str="%";
   //char temp[10];
-
+printf("21 TRACE(5,KadPeer::OnTimer...transaction map:  LObject map: \n");
   va_start(ap, format);
   while (*format){
     
@@ -108,7 +108,7 @@ inline void TRACE(int level, char* format, ...) {
 
 #include <stdarg.h>
 
-inline void TRACE(int level, char* format, ...) {
+//inline void TRACE(int level, char* format, ...) {
 
 #ifdef DEBUG 
 
@@ -176,7 +176,7 @@ inline void TRACE(int level, char* format, ...) {
 
 #endif
 
-}//TRACE
+//}//TRACE
 
 /*
 #define TRACE(level, format, args) { \

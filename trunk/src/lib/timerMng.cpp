@@ -1,6 +1,5 @@
 #include "timer.h"
-/* STL, Priority_queue(min-heap) 
- * for storing all pkt's timer */
+
 minTmHeapType timerheap;
 boost::mutex timermutex;
 
@@ -8,12 +7,11 @@ boost::mutex timermutex;
  * Initialize the Queue and Map 
  * ******************************************/
 timerMng::timerMng(){
-	//run TimerCk ia a new thread: timer thread
-  timercker = new timerCk();
+	/* create a new timer thread */
+	timercker = new timerCk();
 
-  //Make sure timerheap is empty
+  /* make sure timerheap is empty */
   while( !timerheap.empty() ) {
-		std::cerr << "Timer heap doesn't empty! Cleaning it!\n";
 		timerheap.pop();
 	}
   std::cout << "*** timerMng built ***\n";
@@ -29,15 +27,14 @@ bool timerMng::add(conn_id cid, time_id tid, seq_id pid, long ms){
   timernode = new node_t(cid, tid, pid, getCurMs()+ms);  
   timerheap.push(*timernode);
 }
-bool timerMng::add(conn_id cid, time_id tid, seq_id pid, sockTb *st, char *payload){
+
+bool timerMng::add(conn_id cid, time_id tid, seq_id pid, sockTb *st, std::string *payload){
 	boost::mutex::scoped_lock lock(timermutex);
 	timernode = new node_t(cid, tid, pid, st, payload);
 	timerheap.push(*timernode);
 	std::cout<< " *** Add Timer cid: "<<cid <<" seq_id: "<< pid<<" TID: "<<tid<<" *** "<<std::endl;
-	
-  //test
-  //std::cout << "timer(ms: "<<timernode->ms <<") (id: "<<timernode->c_id << " pid: " << timernode->p_id<<" is added  "<<ms <<" "<<getCurMs() <<" "<< timernode<<std::endl;
 }
+
 /*********************************************
  * 1. Delete the timer by conn_id and time_id
  * Reg the id into vector
@@ -48,7 +45,7 @@ bool timerMng::delete_timer(conn_id cid, time_id tid, seq_id pid){
 }
 
 /*********************************************
- * check if there's already a del timer in the
+ * check if there's already a deletion timer in the
  * del_timer queue
  * ******************************************/
 bool timerMng::ck_del_timer(conn_id cid, time_id tid, seq_id pid){
