@@ -47,19 +47,19 @@ class node_t {
 			:c_id(c), t_id(t), p_id(p), st(s) {
 		  payload = new std::string(pl);
       std::cout << "timer node built ..sockfd is: "<<c<<" sizeof payload is : " 
-				<< payload->size() <<" socktb->tc.snd_ack: "<<st->tc.rcv_nxt <<std::endl;
+				<< payload->size() <<" socktb->tc.snd_ack: "<<st->tc.rcv_nxt <<" size of payload: "<< payload->size() << std::endl;
 			ms = getCurMs() + s->tc.t_timeout;
 			};
 		node_t(conn_id c, time_id t, seq_id p, sockTb *s, std::string *pl)
 			:c_id(c), t_id(t), p_id(p), st(s) {
 		  payload = new std::string(*pl);
       std::cout << "timer node built ..sockfd is: "<<c<<" sizeof payload is : " 
-				<< payload->size() <<" socktb->tc.snd_ack: "<<st->tc.rcv_nxt <<std::endl;
+				<< payload->size() <<" socktb->tc.snd_ack: "<<st->tc.rcv_nxt <<" size of payload: "<< payload->size() << std::endl;
 			ms = getCurMs() + s->tc.t_timeout;
 			};
 
 		~node_t(){ 
-			delete payload; 
+			//delete payload; 
 		};
 
     conn_id	c_id;
@@ -191,7 +191,7 @@ class timerMng {
     bool resetall();
 
   private:
-    node_t *timernode;
+    //node_t *timernode;
     timerCk *timercker;	//thread for cking next-fired timer
 };
 

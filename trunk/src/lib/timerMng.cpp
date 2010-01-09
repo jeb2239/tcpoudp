@@ -24,15 +24,17 @@ timerMng::timerMng(){
  ********************************************/
 bool timerMng::add(conn_id cid, time_id tid, seq_id pid, long ms){
   boost::mutex::scoped_lock lock(timermutex);
-  timernode = new node_t(cid, tid, pid, getCurMs()+ms);  
-  timerheap.push(*timernode);
+  //timernode = new node_t(cid, tid, pid, getCurMs()+ms);  
+  //timerheap.push(*timernode);
+	timerheap.push( new node_t(cid, tid, pid, getCurMs()+ms) );
 }
 
 bool timerMng::add(conn_id cid, time_id tid, seq_id pid, sockTb *st, std::string *payload){
 	boost::mutex::scoped_lock lock(timermutex);
-	timernode = new node_t(cid, tid, pid, st, payload);
-	timerheap.push(*timernode);
-	std::cout<< " *** Add Timer cid: "<<cid <<" seq_id: "<< pid<<" TID: "<<tid<<" *** "<<std::endl;
+	//timernode = new node_t(cid, tid, pid, st, payload);
+	//timerheap.push(*timernode);
+	timerheap.push( new node_t(cid, tid, pid, st, payload) );
+	std::cerr<< " *** Add Timer cid: "<<cid <<" seq_id: "<< pid<<" TID: "<<tid<<" *** "<<std::endl;
 }
 
 /*********************************************

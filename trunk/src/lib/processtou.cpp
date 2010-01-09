@@ -41,7 +41,7 @@ void processTou::run(int sockfd) {
 	switch(state){
 		case PROCESS_SYN: /* Connection Control */
 			//Check if the connection is in estabished state
-			cout << "SYN Received "  << endl;
+			cout << "[PROCESSTOU MSG] PROCESS_SYN: SYN Received "  << endl;
 			//if(socktb->sockstate == TOUS_ESTABLISHED)
 			{
 				//Do nothing	
@@ -57,7 +57,7 @@ void processTou::run(int sockfd) {
 		break;
 		
 		case PROCESS_FIN: /* Connection Control */
-			cout<< "Received Fin " << endl ;
+			cout<< "[PROCESSTOU MSG] PROCESS_FIN: Received Fin " << endl ;
 			tp->printall();
 			/* Check for FIN flag (Close) : */
 			cout<<"Closing Connection... " << endl;        
@@ -66,7 +66,7 @@ void processTou::run(int sockfd) {
 		break;
 		
 		case PROCESS_ACK_WITHOUT_DATA:
-			std::cout<< "Get a (new ACK) in TOUS_ESTABLISHED state\n";
+			std::cout<< "[PROCESSTOU MSG] PROCESS_ACK_WITHOUT_DATA: Get a (new ACK) in TOUS_ESTABLISHED state\n";
 			if(!tm1.ck_del_timer(sockfd, 88, tp->t.ack_seq)){//ck if already have an ACK
 				tm1.delete_timer(sockfd,88,tp->t.ack_seq);
 				socktb->sc->addwnd();
@@ -178,7 +178,6 @@ void processTou::run(int sockfd) {
 	PKTLOSTTEST: /* for test */
 	cout << " *** Leaving process tou *** " << endl;
 	/* delete received tou pakcet */
-	delete tp;
 }/* END of processtou */
 
 /**
@@ -195,7 +194,8 @@ int processTou::processGetPktState(touPkg *tp){
 	
 	if(tp->t.ack == FLAGON &&
 			socktb->sockstate == TOUS_ESTABLISHED && 
-			socktb->tc.snd_nxt == tp->t.seq)
+			tp->buf->size() == 0 &&
+			socktb->tc.snd_nxt >= tp->t.ack_seq)
 		return PROCESS_ACK_WITHOUT_DATA;
 
 	/* receiving data */
@@ -217,6 +217,10 @@ int processTou::processGetPktState(touPkg *tp){
 			socktb->sockstate == TOUS_ESTABLISHED)
 		return PROCESS_ACK_WITH_DATA_MORE_EXPECTED_SEQ;
 
+  cerr << "[PROCESSTOU] state error : PROCESS_END \n";
+	socktb->printall();
+	tp->printall();
+	exit(1);
 	return PROCESS_END;
 }
 

@@ -9,8 +9,9 @@ void timerCk::doit(){
 	
   while(1){
 		// loop activated if there is timer node in timer heap and timer is fired
-    while( !timerheap.empty() && (timerheap.top().ms <= getCurMs()) ){
+		while(1){
       boost::mutex::scoped_lock lock(timermutex);
+			if( !( !timerheap.empty() && (timerheap.top().ms <= getCurMs())) ) break;
 			// check if there's record in del vector
 			// if yes, pop and discard the fired timer
 			// if no, handle the fired timer(rexmit and reset timer)
@@ -36,7 +37,7 @@ void timerCk::doit(){
 				/* end of for test */
 				}	
 				timerheap.pop();
-    }
+		}
 		//synchronous wait for TIMER_WT ms
 		t.wait();
     
