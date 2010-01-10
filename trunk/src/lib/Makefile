@@ -47,7 +47,7 @@ libtou_a_AR = $(AR) $(ARFLAGS)
 libtou_a_LIBADD =
 am_libtou_a_OBJECTS = tou.$(OBJEXT) timer.$(OBJEXT) timerMng.$(OBJEXT) \
 	tou_ss_ca.$(OBJEXT) touSockTable.$(OBJEXT) \
-	circularbuffer.$(OBJEXT) processtou.$(OBJEXT)
+	circularbuffer.$(OBJEXT) processtou.$(OBJEXT) Logger.$(OBJEXT)
 libtou_a_OBJECTS = $(am_libtou_a_OBJECTS)
 DEFAULT_INCLUDES = -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -149,7 +149,7 @@ target_alias =
 top_builddir = ../..
 top_srcdir = ../..
 noinst_LIBRARIES = libtou.a
-libtou_a_SOURCES = tou.cpp timer.cpp timerMng.cpp tou_ss_ca.cpp touSockTable.cpp circularbuffer.cpp processtou.cpp 
+libtou_a_SOURCES = tou.cpp timer.cpp timerMng.cpp tou_ss_ca.cpp touSockTable.cpp circularbuffer.cpp processtou.cpp	Logger.cpp
 INCLUDES = -I../../boostlib/boost_1_40_0
 CLEANFILES = *~ *.o
 all: all-am
@@ -199,6 +199,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+include ./$(DEPDIR)/Logger.Po
 include ./$(DEPDIR)/circularbuffer.Po
 include ./$(DEPDIR)/processtou.Po
 include ./$(DEPDIR)/timer.Po

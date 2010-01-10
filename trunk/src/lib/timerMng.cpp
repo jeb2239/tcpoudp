@@ -1,11 +1,20 @@
+/**
+ * timerMng.cpp:
+ * Implementation of timerMng class. 
+ *
+ * Copyright 2009 by Columbia University; all rights reserved
+ * Jan 09, 2010
+ */
+
 #include "timer.h"
 
 minTmHeapType timerheap;
 boost::mutex timermutex;
 
-/*********************************************
+/**
+ * timerMng::timerMng():
  * Initialize the Queue and Map 
- * ******************************************/
+ */
 timerMng::timerMng(){
 	/* create a new timer thread */
 	timercker = new timerCk();
@@ -14,46 +23,42 @@ timerMng::timerMng(){
   while( !timerheap.empty() ) {
 		timerheap.pop();
 	}
-  std::cout << "*** timerMng built ***\n";
 }
 
-/*********************************************
- * 1. Lock the resources.
- * 2. New a timer, and put intot timerheap
- * 3. payload, char* int, seq#, 
- ********************************************/
-bool timerMng::add(conn_id cid, time_id tid, seq_id pid, long ms){
-  boost::mutex::scoped_lock lock(timermutex);
-  //timernode = new node_t(cid, tid, pid, getCurMs()+ms);  
-  //timerheap.push(*timernode);
-	timerheap.push( new node_t(cid, tid, pid, getCurMs()+ms) );
-}
-
-bool timerMng::add(conn_id cid, time_id tid, seq_id pid, sockTb *st, std::string *payload){
+/**
+ * timerMng::add(conn_id cid, time_id tid, seq_id pid, long ms):
+ * use timermutex to lock the scope and then new a timer, put it into timer
+ * heap, including paylaod and seq #s.
+ */
+bool timerMng::add(conn_id cid, time_id tid, seq_id pid, sockTb *st, 
+		std::string *payload){
 	boost::mutex::scoped_lock lock(timermutex);
-	//timernode = new node_t(cid, tid, pid, st, payload);
-	//timerheap.push(*timernode);
-	timerheap.push( new node_t(cid, tid, pid, st, payload) );
-	std::cerr<< " *** Add Timer cid: "<<cid <<" seq_id: "<< pid<<" TID: "<<tid<<" *** "<<std::endl;
+	timernode = new node_t(cid, tid, pid, st, payload);
+	timerheap.push(*timernode);
+	lg.logData("*** Add Timer cid: "+lg.c2s(cid)+" seq_id: "+lg.c2s(pid)+" TID: "
+			+lg.c2s(tid)+" *** ", TOULOG_TIMER);
 }
 
-/*********************************************
- * 1. Delete the timer by conn_id and time_id
- * Reg the id into vector
- * ******************************************/
+/**
+ * timerMng::delete_timer(conn_id cid, time_id tid, seq_id pid)
+ * Delete the timer with conn_id and time_id by registering the id into vector
+ */
 bool timerMng::delete_timer(conn_id cid, time_id tid, seq_id pid){
   if(timercker->addDelNode(cid, tid, pid)) 
-		std::cout<< " *** Add del Anchor cid: "<<cid <<" seq_id: "<< pid<<" TID: "<<tid<<" *** "<<std::endl;
+		lg.logData("*** Add del Anchor cid: "+lg.c2s(cid)+" seq_id: "+lg.c2s(pid)+
+				" TID: "+lg.c2s(tid)+" ***", TOULOG_TIMER);
 }
 
-/*********************************************
- * check if there's already a deletion timer in the
- * del_timer queue
- * ******************************************/
+/**
+ * timerMng::ck_del_timer(conn_id cid, time_id tid, seq_id pid):
+ * check if there's already a deletion timer in the del_timer queue
+ */
 bool timerMng::ck_del_timer(conn_id cid, time_id tid, seq_id pid){
 	return timercker->ckTimer(cid, tid, pid);
 }
 
+/**
+ * following code reserved */
 bool timerMng::reset(conn_id cid, time_id tid, seq_id pid){
 
 }

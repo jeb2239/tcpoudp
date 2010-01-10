@@ -1,7 +1,10 @@
-/******************************************************
+/**
  * touSockTable.h
- * This is ToU socket table & its talbe management
- *****************************************************/
+ * Including ToU socket table, and its talbe management
+ *
+ * Copyright 2009 by Columbia University; all rights reserved
+ * Jan 10, 2010
+ */
 #include <iostream>
 #include <string>
 #include <string.h>
@@ -15,13 +18,16 @@
 #include <boost/thread.hpp>
 
 #include "touCongestion.h"
-#include "circularBuffer.h"     //circular buffer
+#include "circularBuffer.h"
 #include "touHeader.h"
 
 //boost::mutex soctabmutex;
 //boost::mutex socktabmutex1;
 
-/* compare the pkt by it's sequence number */
+/**
+ * heapPkgComp:
+ * compare the pkt by its sequence number
+ */
 class heapPkgComp {
 	public:
 		bool operator() (const touPkg& lhs, const touPkg& rhs) const {
@@ -29,8 +35,14 @@ class heapPkgComp {
 		}
 };
 
+/* define the buffer(queue) for timer nodes */
 typedef std::priority_queue<touPkg, std::vector<touPkg>, heapPkgComp> minPkgHeapType;
 
+/**
+ * sockTb: 
+ * ToU socket table where stores the information that essential for management
+ * of ToU connections.
+ */
 class sockTb {
 	private:
 		boost::mutex soctabmutex;
@@ -53,25 +65,18 @@ class sockTb {
 		int pfd[2];
 		sockTb();
 		~sockTb() {delete sc;}
-		bool ckHpRecvBuf(const touPkg &pkt);//ch if there's duplicate pkt in HpRecvBuf
-
-		void printall() { /* TEST */
-			std::cout<<"*** SOCKET TABLE RESULT ***\n";
-			std::cout<<"sockd: "<<sockd<<" sport: "<<sport<<" dport: "<<dport <<std::endl;
-			//cout<<"sip    : "<<sip<<" dip : "<<dip <<endl;
-			std::cout<<"cc_state: "<<tc.cc_state<<std::endl;
-			std::cout<<"snd_una : "<<tc.snd_una<<std::endl;
-			std::cout<<"snd_nxt : "<<tc.snd_nxt<<std::endl;
-			std::cout<<"rcv_nxt : "<<tc.rcv_nxt<<std::endl;
-			std::cout<<"snd_cwnd:"<<tc.snd_cwnd<<std::endl;
-			std::cout<<"snd_awnd:"<<tc.snd_awnd<<std::endl;
-			std::cout<<"snd_ssthresh:"<<tc.snd_ssthresh<<std::endl<<std::endl;
-		}
+		bool ckHpRecvBuf(const touPkg &pkt);//ch if there's dup pkt in HpRecvBuf
+		void printall();
 };
 
 /* SS is Socket Table for storing socket informaiton */
 extern std::vector<sockTb*> SS;
 
+/**
+ * sockMng:
+ * socket management which is responsible for the menagement of ToU socket
+ * table.
+ */
 class sockMng {
 	public :
 		sockMng() {s = new sockTb();}

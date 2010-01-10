@@ -1,23 +1,32 @@
-/*************************************************************
- * Slow start algorithm and Congestion control algorithm
+/**
+ * ssca
+ * Slow start algorithm, congestion avoidance and fast retransmit.
+ * States of congestion control algorithm are implemented here.
+ *
+ * Copyright 2009 by Columbia University; all rights reserved
  * C, Lee, Oct 18, 2009
- * **********************************************************/
+ */
 #include "touCongestion.h"
 
-
-ssca::ssca(touCb *ptb):tb(ptb) {
+/**
+ * ssca(touCb *ptb):
+ * Initialization of congestion control states.
+ */
+ssca::ssca(touCb *ptb)
+			:tb(ptb) {
   tb->cc_state = TOU_CC_SS;
   tb->snd_cwnd = TOU_SMSS;
   tb->dupackcount = 0;
   tb->snd_ssthresh = TOU_MAX_SSTHRESH;
 }
 
-/* adding value(e.g. MSS) to window size base on current
- * control control state.
- *
- * this function should be called only when get "new ack"
+/**
+ * addwnd():
+ * Adding values(e.g. MSS) to window size base on current control control state
+ * This function should be called only when processtou.run() gets "new ack"
  * return 0, if success.
- * retrun 1, if failure.				*/
+ * retrun 1, if failure.
+ */
 int ssca::addwnd() {
   int err = 0;
   switch(tb->cc_state) {
@@ -68,9 +77,12 @@ u_long ssca::getwnd() {
 	return tb->snd_wnd;
 }
 
-/* set wnd while time out 
+/**
+ * settwnd():
+ * set wnd while time out occurs.
  * return 1 if failure.
- * return 0 if success	     */
+ * return 0 if success
+ */
 int ssca::settwnd() {
 	int err = 0;
   
@@ -103,9 +115,12 @@ int ssca::settwnd() {
 	return err;
 }
 
-/* set wnd while duplicate ack
+/**
+ * setdwnd();
+ * set wnd while receives duplicate ack
  * return 1 if failure.
- * return 0 if success	     */
+ * return 0 if success.	     
+ */
 int ssca::setdwnd() {
 	int err = 0;
   

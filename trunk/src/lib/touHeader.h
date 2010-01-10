@@ -1,8 +1,16 @@
-/***************************************************
- * This is header file.
- **************************************************/
+/**
+ * touHeader
+ * Primitive ToU header definitions.
+ *
+ * Copyright 2009 by Columbia University; all rights reserved
+ * Jan 10, 2010
+ */
+
+/* ToU packet's payload size */
 #define TOU_MSS				1456
 #define TOU_MAX				1456
+
+/* ToU flag definition */
 #define FLAGON				1
 #define FLAGOFF				0
 
@@ -10,14 +18,12 @@
 #include <string>
 #include <stdio.h>
 
-
-/***************************************************
- *8 TOU HEADER
- * The size of the fixed ToU  header is 16 bytes, 
- * whereas the size of fixed TCP header is 20 bytes.
- * The fixed ToU header and UDP header have a cumulative 
- * size of 24 bytes, four more than a fixed TCP header.
- **************************************************/ 
+/**
+ * touHeader: 
+ * TOU HEADER. The size of the fixed ToU  header is 16 bytes, whereas the size 
+ * of fixed TCP header is 20 bytes. The fixed ToU header and UDP header have a 
+ * cumulative size of 24 bytes, four more than a fixed TCP header.
+ */
 class touHeader {
   public:
 	u_long	seq;
@@ -38,15 +44,14 @@ class touHeader {
 	u_short	window;
 };
 
-/******************************************************
+/**
+ * touPkg:
  * ToU application layer: ToU hdr + Data(payload)
- * ***************************************************/
-
+ */
 class touPkg {
 	public:
 		touHeader	t;
 		std::string	*buf;
-		//char			buf[TOU_MSS];
 
 		/**
 		 * default constructor 
@@ -169,11 +174,6 @@ class touPkg {
 		}
 
 		int putHeaderSeq(u_long seq=0, u_long ack_seq=0){
-			/*
-			t.seq = htonl(seq);
-			t.ack_seq = htonl(ack_seq);
-			t.mag = htonl(0x7194B32E);
-		  */	
 			t.seq = seq;
 			t.ack_seq = ack_seq;
 			t.mag = 0x7194B32E;
