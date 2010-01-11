@@ -182,8 +182,6 @@ int touMain::touSocket(int domain, int type, int protocol) {
 	setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)); 
 	/* init processTou */
 	proTou(sd);
-
-	cout << " Socket returns : " << sd << endl;
 	return sd;
 }
 
