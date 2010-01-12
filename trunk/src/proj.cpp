@@ -10,7 +10,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-#define MAXSNDBUF 20000 
+#define MAXSNDBUF 30000 
 using namespace std;
 
 int isClient = 0;
@@ -32,6 +32,9 @@ int main(int argc, char* argv[]){
 	ifstream            indata;
 	int									readsize; //how much data been read
 	int									sendsize; //how much data been sent
+
+	//logging
+	LOGFLAG = TOULOG_PTSRN;
 
   if(argc == 4 && !strncmp( argv[3], "-c", 2)) /* ./tou 127.0.0.1 ./test_file -c */
 	{
@@ -107,7 +110,7 @@ int main(int argc, char* argv[]){
 			tim.tv_usec = 0;
 
 			selectval = select(sockd+1, &socks, NULL, NULL, &tim);
-			cout<< ">> Select LOOP: select returns: "<<selectval<< endl; 
+			cout<< "\n >>> NEW ITERATION >>> Select LOOP: select returns: "<<selectval<< endl; 
 			if (selectval){
 				cout<< "Execute processTou->RUN: recv ACK"<< endl;
 				tm.ptou->run(sockd);
@@ -131,7 +134,6 @@ int main(int argc, char* argv[]){
 		//Check if it is tou socket
     fd_set socks;
  		struct timeval tim;
-
 
 		//CREATE 
 		sockd = tm.touSocket(AF_INET,SOCK_DGRAM,0);
