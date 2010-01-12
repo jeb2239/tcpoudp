@@ -226,7 +226,9 @@ int touMain::touConnect(int sd, struct sockaddr_in *socket1, int addrlen) {
 	touPkg ackpkt(0);
 	ackpkt.clean();
 	srand((unsigned)time(NULL)); 
-	ackpkt.putHeaderSeq(rand()%(u_long)65535, (u_long)0);  
+	//ackpkt.putHeaderSeq(rand()%(u_long)65535, (u_long)0);  
+	//For test, assigned seq #
+  ackpkt.putHeaderSeq(10000, (u_long)0);	
 	ackpkt.t.syn = FLAGON;
 	sm.setSocketState(TOUS_SYN_SENT,sd);
 	sm.setTCBState(TOU_CC_SS, sd);

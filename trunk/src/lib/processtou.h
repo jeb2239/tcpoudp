@@ -78,7 +78,7 @@ class processTou {
     int										sockfd;
 		sockMng								*sm;
 	  sockTb								*socktb;
-		touPkg								*tp;
+		//touPkg								*tp;
     struct sockaddr_in		sockaddrs;
 		bool									recovery;     //recovery mode or not
 

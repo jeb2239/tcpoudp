@@ -18,7 +18,9 @@ void processTou::run(int sockfd) {
 	int			state;			//FSM for processTou
 	size_t	len = sizeof(sockaddrs);//sockaddr's size
 	char		recvbuf[RECVBUFSIZE];
-	char		recvcontent[RECVBUFSIZE] = "";
+	char		recvcontent[RECVBUFSIZE];
+	touPkg	*tp;
+	memset(recvcontent, 0, RECVBUFSIZE);
 	string	pkgackcontent;
 
 	socktb = sm->getSocketTable(sockfd);
@@ -27,11 +29,13 @@ void processTou::run(int sockfd) {
 	cout << "*** processTou Start Processtou now Waiting for data from client *** "  << endl;
 	/* Waiting for incoming data */
 	rv = recvfrom(sockfd, recvcontent, RECVBUFSIZE, 0, (struct sockaddr*)&sockaddrs,&len);
+
+	cout << "rv is: "<< rv << endl;
 	string content(recvcontent, rv);
-	tp = new touPkg(content);
+	tp = new touPkg(content); 
 
 	/* test print it out */
-  cout << "size of content: "<<content.size() << " size of recvsize: "<<rv <<endl; //<<recvcontent<<endl<<endl<<content<<endl;
+  //cout << "size of content: "<<content.size() << " size of recvsize: "<<rv <<endl; //<<recvcontent<<endl<<endl<<content<<endl;
 	tp->printall();
 	cout << "Received pkt size: "<<rv <<" from : " << inet_ntoa(sockaddrs.sin_addr) <<  " " << htons(sockaddrs.sin_port) << endl; 
 	/* end of test */
@@ -66,38 +70,33 @@ void processTou::run(int sockfd) {
 		break;
 		
 		case PROCESS_ACK_WITHOUT_DATA:
-			std::cout<< "[PROCESSTOU MSG] PROCESS_ACK_WITHOUT_DATA: Get a (new ACK) in TOUS_ESTABLISHED state\n";
+			std::cout<< "[PROCESSTOU MSG] PROCESS_ACK_WITHOUT_DATA: new ACK" << std::endl;
 			if(!tm1.ck_del_timer(sockfd, 88, tp->t.ack_seq)){//ck if already have an ACK
 				tm1.delete_timer(sockfd,88,tp->t.ack_seq);
 				socktb->sc->addwnd();
 				sm->setTCB(socktb->tc.snd_nxt, tp->t.ack_seq, sockfd); // set up snd_una only
 			}else{//duplicate ack (already have one in delqueue)
 				socktb->sc->setdwnd();
-				std::cout << "duplicate ACK: "<< tp->t.ack_seq << " it's #: "<< socktb->tc.dupackcount<<std::endl;
+				std::cout << "[PROCESS_ACK_WITHOUT_DATA] DUPLICATE ACK: "<< tp->t.ack_seq << " it's #: "<< socktb->tc.dupackcount<<std::endl;
 			}
-			tp->printall();
 			socktb->printall();
-			// wnd size goes up, got chance to send another pkt
-			cout<< "processTou->SEND: Try to send data left in circular buff..."<<endl;
+			cout<< "[PROCESS_ACK_WITHOUT_DATA] Try to send data left in circular buff"<<endl;
 			send(sockfd);
 			state = PROCESS_END;
 		break;
 		
 		case PROCESS_ACK_WITH_DATA_MATCH_EXPECTED_SEQ:
+			std::cout<< "[PROCESSTOU MSG] PROCESS_ACK_WITH_DATA_MATCH_EXPECTED_SEQ" << std::endl;
 			rvpl = tp->buf->size(); //get pkt payload size
-			if(rvpl > TOU_MSS) rvpl = TOU_MSS; /* err: it'll read 1464, some dirty bits in the rear */
-			
-			/* For test */
-			std::cout << "Get DATA in TOUS_ESTABLISHED state\n";
-			std::cout << "@@@ DATA GET @@@ Data size: "<<rvpl <<std::endl;
+
 			/* test sent pkt lost */
-			if(tp->t.seq == 53715 && pktlosttest_int ){
-			std::cout << "\n *** pkg 53715 lost test: no ack once PKTLOSTTEST *********\n";
-			std::cout << " *** pkg 53715 lost test: no ack once PKTLOSTTEST *********\n\n";
+			if(tp->t.seq == 18417 && pktlosttest_int ){
+			std::cout << "\n *** pkg 18417 lost test: no ack once PKTLOSTTEST *********\n";
+			std::cout << " *** pkg 18417 lost test: no ack once PKTLOSTTEST *********\n\n";
 			pktlosttest_int = 0;
 			/* FOR TEST */goto PKTLOSTTEST;
 			}
-			
+
 			/* try recovery from duplicate pkt first
 			 * HpRecvBuf is not empty, and get the correct seq. Start recovery */
 			if(!socktb->HpRecvBuf.empty()){
@@ -134,10 +133,12 @@ void processTou::run(int sockfd) {
 				std::cout<< " >>>>***>>> Seqnumber matched \n";
 			}
 			recovery = false;
+
 			state = PROCESS_ACK_DATARECSUCC_SENDBACK_ACK;
 		break;
 		
 		case PROCESS_ACK_WITH_DATA_LESS_EXPECTED_SEQ:
+			cout<< "[PROCESSTOU MSG] PROCESS_ACK_WITH_DATA_LESS_EXPECTED_SEQ" << endl ;
 			/* test don't care */
 			std::cout<< "\n >>>>***>>> tp->t.seq < socktb->tc.rcv_nxt DONT CARE" 
 			<<  tp->t.seq  << "number of elm in HpRecvBuf: " 
@@ -146,7 +147,10 @@ void processTou::run(int sockfd) {
 		break;
 		
 		case PROCESS_ACK_WITH_DATA_MORE_EXPECTED_SEQ:
-			socktb->HpRecvBuf.push(*tp);
+			cout<< "[PROCESSTOU MSG] PROCESS_ACK_WITH_DATA_MORE_EXPECTED_SEQ" << endl ;
+			cout<< "size:  socktb->HpRecvBuf.size() :" <<  socktb->HpRecvBuf.size()  << endl;
+			//socktb->HpRecvBuf.push(*tp);
+			socktb->pushHpRecvBuf(*tp);
 			std::cout<< "\n >>>>***>>> Inside push into the HpRecvBuf: "
 			<<tp->t.seq  << "number of elm in HpRecvBuf: " 
 			<< socktb->HpRecvBuf.size() << "\n";
@@ -154,6 +158,7 @@ void processTou::run(int sockfd) {
 		break;
 		
 		case PROCESS_ACK_DATARECSUCC_SENDBACK_ACK:
+			cout<< "[PROCESSTOU MSG] PROCESS_ACK_DATARECSUCC_SENDBACK_ACK" << endl ;
 			/* send ACK back to sender */
 			pkgack.clean();
 			assignaddr((struct sockaddr_in *)&sockaddrs, AF_INET, socktb->dip, socktb->dport);
@@ -280,8 +285,8 @@ void processTou::send(int sockfd) {
 
 	//while( 0 < (totalelm = socktb->CbSendBuf.getTotalElements()))
 	{
-		// there're some data in the buf need to be send 
-		cout << " *** Inside: processtou::send number of bytes in the circular buff: "<< socktb->CbSendBuf.getTotalElements() <<endl;
+		// there're some data in the buf needed to be sent 
+		cout << "[PROCESSTOU SEND] bytes in the circular buff: "<< socktb->CbSendBuf.getTotalElements() <<endl;
 
 		/* get the current window size */
 		curwnd = socktb->sc->getwnd();

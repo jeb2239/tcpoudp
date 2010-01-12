@@ -61,6 +61,15 @@ class touPkg {
 			clearFlag();
 			buf = new std::string(TOU_MSS, ' ');
 		}
+
+		/**
+		 * copy contructor
+		 */
+		touPkg(const touPkg &toupkt){
+			t = toupkt.t;
+			buf = new std::string(toupkt.buf->data());
+		}
+
 		/**
 		 * constructor
 		 * specify the size with user specified number
@@ -121,7 +130,7 @@ class touPkg {
 		 * destructor
 		 */
 		~touPkg(){
-			delete buf;
+			//delete buf;
 		}
 
 		std::string toString(){

@@ -13,6 +13,9 @@
 #define TOULOG_SOCKTB		0x0020
 #define TOULOG_PTSRN		0x0040
 
+/* public log flag for user program */
+extern unsigned short LOGFLAG;
+
 class Logger{
 private:
 	unsigned short	logstate;

@@ -45,7 +45,7 @@ typedef std::priority_queue<touPkg, std::vector<touPkg>, heapPkgComp> minPkgHeap
  */
 class sockTb {
 	private:
-		boost::mutex soctabmutex;
+		boost::mutex stmutex;
 		touPkg	duppkt;
 
 	public:
@@ -66,6 +66,7 @@ class sockTb {
 		sockTb();
 		~sockTb() {delete sc;}
 		bool ckHpRecvBuf(const touPkg &pkt);//ch if there's dup pkt in HpRecvBuf
+		void pushHpRecvBuf(const touPkg &pkt);
 		void printall();
 };
 

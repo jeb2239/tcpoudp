@@ -168,18 +168,26 @@ int sockMng::setCbData(char *buf,int len,int sd) {
 }
 
 /**
+ * pushHpRecvBuf(touPkg pkt)
+ */
+void sockTb::pushHpRecvBuf(const touPkg &pkt){
+	boost::mutex::scoped_lock lock(stmutex);
+	HpRecvBuf.push(pkt);
+}
+
+/**
  * printall()
  * for testing, and it will log the msg into related files
  */
 void sockTb::printall() {
-	lg.logData("*** SOCKET TABLE RESULT ***", TOULOG_ALL|TOULOG_SOCKTB);
+	lg.logData("*** SOCKET TABLE RESULT ***", TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
   lg.logData("sockd:"+lg.c2s(sockd)+" sport:"+lg.c2s(sport)+" dport:"+lg.c2s(dport)
-		, TOULOG_ALL|TOULOG_SOCKTB);
-	lg.logData("cc_state: "+lg.c2s(tc.cc_state), TOULOG_ALL|TOULOG_SOCKTB);
-  lg.logData("snd_una : "+lg.c2s(tc.snd_una), TOULOG_ALL|TOULOG_SOCKTB);
-	lg.logData("snd_nxt : "+lg.c2s(tc.snd_nxt), TOULOG_ALL|TOULOG_SOCKTB);
-	lg.logData("rcv_nxt : "+lg.c2s(tc.rcv_nxt), TOULOG_ALL|TOULOG_SOCKTB);
-	lg.logData("snd_cwnd: "+lg.c2s(tc.snd_cwnd), TOULOG_ALL|TOULOG_SOCKTB);
-	lg.logData("snd_awnd: "+lg.c2s(tc.snd_awnd), TOULOG_ALL|TOULOG_SOCKTB);
-	lg.logData("snd_ssthresh:"+lg.c2s(tc.snd_ssthresh), TOULOG_ALL|TOULOG_SOCKTB);
+		, TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
+	lg.logData("cc_state: "+lg.c2s(tc.cc_state), TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
+  lg.logData("snd_una : "+lg.c2s(tc.snd_una), TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
+	lg.logData("snd_nxt : "+lg.c2s(tc.snd_nxt), TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
+	lg.logData("rcv_nxt : "+lg.c2s(tc.rcv_nxt), TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
+	lg.logData("snd_cwnd: "+lg.c2s(tc.snd_cwnd), TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
+	lg.logData("snd_awnd: "+lg.c2s(tc.snd_awnd), TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
+	lg.logData("snd_ssthresh:"+lg.c2s(tc.snd_ssthresh), TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
 }

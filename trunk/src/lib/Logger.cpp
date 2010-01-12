@@ -4,10 +4,12 @@
 #include <iostream>
 
 Logger lg;
+unsigned short LOGFLAG;
 
 using namespace std;
 Logger::Logger()
 {
+	logstate = LOGFLAG;
 	file.open("./Tou.log");
 	file_timer.open("./Tou_timer.log");
 	file_pktsent.open("./Tou_pktsent.log");
@@ -71,7 +73,7 @@ void Logger::logFileSocktb(string data){
 
 
 void Logger::logData(string data, unsigned short LoggingLevel){
-	logstate = LoggingLevel;
+	logstate =  logstate | LoggingLevel;
 	
 	while( logstate != 0x0000 ){
 		if ((logstate & TOULOG_ALL) == TOULOG_ALL){
@@ -95,7 +97,7 @@ void Logger::logData(string data, unsigned short LoggingLevel){
 				logstate = logstate & ~TOULOG_SOCKTB;
 		}else if ((logstate & TOULOG_PTSRN) == TOULOG_PTSRN){
 				 //PRINT TO TERMINAL
-				std::cerr << data;
+				std::cerr << data << endl;
 				logstate = logstate & ~TOULOG_PTSRN;
 		}else{
 				std::cerr << "[Logger]: logstate error\n";
