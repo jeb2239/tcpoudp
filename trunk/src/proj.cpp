@@ -11,6 +11,7 @@
 #include <netdb.h>
 
 #define MAXSNDBUF 30000 
+#define TIMEOUTVAL 4	// four seconds
 using namespace std;
 
 int isClient = 0;
@@ -93,7 +94,7 @@ int main(int argc, char* argv[]){
 			exit(1);
 		}
 		if( !indata.eof() ) {
-		  cerr << "Reading data from file: "<< argv[2] << std::endl;
+		  cerr << "Reading data from file: "<< argv[2] << endl << endl;
 			indata.read(send_data, MAXSNDBUF);
 			readsize = indata.gcount();
 
@@ -106,13 +107,13 @@ int main(int argc, char* argv[]){
 		while(true){
 			FD_ZERO(&socks);
 			FD_SET(sockd, &socks);
-			tim.tv_sec = 1;
+			tim.tv_sec = TIMEOUTVAL;
 			tim.tv_usec = 0;
 
 			selectval = select(sockd+1, &socks, NULL, NULL, &tim);
 			cout<< "\n >>> NEW ITERATION >>> Select LOOP: select returns: "<<selectval<< endl; 
 			if (selectval){
-				cout<< "Execute processTou->RUN: recv ACK"<< endl;
+				//cout<< "Execute processTou->RUN: recv ACK"<< endl;
 				tm.ptou->run(sockd);
 			}else if(selectval == 0){
 				cerr<< ">> Select timeout: leave Select LOOP"<< endl;
@@ -165,7 +166,7 @@ int main(int argc, char* argv[]){
 		while(true){    
 			FD_ZERO(&socks);
 			FD_SET(sockd, &socks);
-			tim.tv_sec = 5;
+			tim.tv_sec = TIMEOUTVAL;
 
 			if (select(sockd+1, &socks, NULL, NULL, &tim)){
 				tm.ptou->run(sockd);
