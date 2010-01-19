@@ -155,4 +155,3 @@ int ssca::setdwnd() {
 	}
 	return err;
 }/* end of int ssca::setdwnd() */
-

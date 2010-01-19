@@ -54,7 +54,18 @@ bool timerMng::delete_timer(conn_id cid, time_id tid, seq_id pid){
  * check if there's already a deletion timer in the del_timer queue
  */
 bool timerMng::ck_del_timer(conn_id cid, time_id tid, seq_id pid){
+	boost::mutex::scoped_lock lock(timermutex);
 	return timercker->ckTimer(cid, tid, pid);
+}
+
+/**
+ * rexmit_for_dup_ack(conn_id cid, time_id tid, seq_id pid):
+ * retransmit specific packet and reset its timer. using this function when in
+ * "fast retransmit state as receiving three duplicate acknowledgements".
+ */
+bool timerMng::rexmit_for_dup_ack(conn_id cid, time_id tid, seq_id pid) {
+	boost::mutex::scoped_lock lock(timermutex);
+	return timercker->rexmit_for_dup_ack(cid, tid, pid);
 }
 
 /**

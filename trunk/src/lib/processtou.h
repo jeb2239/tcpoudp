@@ -53,7 +53,6 @@ class processTou {
 			std::cout<< "*** processTou(int sd, sockMng *sm) is activized now ***\n";
 			sockfd = sd;
 			sm = sockmng;
-			recovery = false;
 		}
 		/**
 		 * destructor
@@ -80,10 +79,10 @@ class processTou {
 	  sockTb								*socktb;
 		//touPkg								*tp;
     struct sockaddr_in		sockaddrs;
-		bool									recovery;     //recovery mode or not
 
 		int popsndq(sockTb *socktb, char *sendbuf, int len);
 		int putcircbuf(sockTb *socktb, int sockfd, std::string  *buf, int rvpl);
 		int processGetPktState(touPkg *pkt);
 		int assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_family, std::string ip, unsigned short port);
+		unsigned long getSendSize(sockTb *socktb);
 };

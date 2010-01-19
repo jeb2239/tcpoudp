@@ -6,7 +6,7 @@
  */
 
 #include "timer.h"
-
+using namespace std;
 /**
  * A periodic loop function for cheing fired timer in timer thread.
  */
@@ -33,10 +33,11 @@ void timerCk::doit(){
 						timerheap.top().st->tc.rcv_nxt);
 
 				toupkt.t.ack = FLAGON;
+				string pktcont = toupkt.toString();
 				assignaddr(&sockaddrs, AF_INET, timerheap.top().st->dip, 
 						timerheap.top().st->dport);
-
-				sendto(timerheap.top().c_id, &toupkt, sizeof(toupkt), 0, (struct sockaddr *)
+				
+				sendto(timerheap.top().c_id, pktcont.data(), pktcont.size(), 0, (struct sockaddr *)
 						&sockaddrs, sizeof(sockaddr));
 
 				//reset the timer
@@ -76,6 +77,61 @@ int timerCk::assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_family,
   if( 1 != inet_pton(sa_family, ip.c_str(), &sockaddr->sin_addr) )
     return 0;
   return 1;
+}
+
+/**
+ * rexmit_for_dup_ack(conn_id cid, time_id tid, seq_id pid):
+ */
+bool timerCk::rexmit_for_dup_ack(conn_id cid, time_id tid, seq_id pid) {
+	minTmHeapType temptimerheap;
+	int bufsize;
+	bool retbool = false;
+
+	for(int i=0; i < timerheap.size(); i++){
+		bufsize = timerheap.top().payload->size();
+
+		if ((timerheap.top().c_id == cid) && (timerheap.top().t_id == tid) &&
+				( (timerheap.top().p_id-bufsize) == pid)) {
+			// find the packet(timer node) which should be rexmitted as receiving
+			// three duplicate acks.
+			touPkg toupkt(timerheap.top().payload->c_str(), bufsize);
+			toupkt.putHeaderSeq((timerheap.top().p_id - bufsize), 
+					timerheap.top().st->tc.rcv_nxt);
+			toupkt.t.ack = FLAGON;
+			string pktcont = toupkt.toString();
+
+			assignaddr(&sockaddrs, AF_INET, timerheap.top().st->dip,
+					timerheap.top().st->dport);
+
+			sendto(cid, pktcont.data(), pktcont.size(), 0, (struct sockaddr *)
+					&sockaddrs, sizeof(sockaddr));
+
+			//reset the timer
+			nt = new node_t(cid, tid, pid, timerheap.top().st, timerheap.top().payload);
+			timerheap.push(*nt);
+
+			/* for test */
+			std::cerr<< "[ .. .. Rexmit_for_dup_ack] c_id:"<<timerheap.top().c_id <<" "
+				<< timerheap.top().p_id <<" timer id : " <<timerheap.top().t_id << " fired."
+				<< "CurTime: "<<getCurMs()<<"; Timer: "<<timerheap.top().ms<<"Buffer size: "<< 
+				bufsize << " Buffer: "<< toupkt.buf <<std::endl;
+			/* end of for test */
+			timerheap.pop();
+			retbool = true;
+			break;
+
+		}else{
+			temptimerheap.push(timerheap.top());
+			timerheap.pop();
+		}
+	}
+
+	// recovery from temptimerheap
+	while (!temptimerheap.empty()){
+		timerheap.push(temptimerheap.top());
+		temptimerheap.pop();
+	}
+	return retbool; 
 }
 
 /**

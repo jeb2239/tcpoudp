@@ -29,7 +29,7 @@ bool sockTb::ckHpRecvBuf(const touPkg &pkt){
 		return true;
 	}
 
-	duppkt = pkt; // may have problem 
+	duppkt = pkt; // may cause problem 
 	return false;
 }
 
@@ -176,18 +176,35 @@ void sockTb::pushHpRecvBuf(const touPkg &pkt){
 }
 
 /**
+ * ck_dupack();
+ * checking whether the number of incoming acks is above three
+ * return true on duplicate acks above or equal to 3.
+ * return false on otherwise.
+ */
+bool sockTb::ck_dupack_3() {
+	return (tc.dupackcount ==3)? true: false;
+}
+
+/**
  * printall()
  * for testing, and it will log the msg into related files
  */
 void sockTb::printall() {
+	string ccstate;
 	lg.logData("*** SOCKET TABLE RESULT ***", TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
-  lg.logData("sockd:"+lg.c2s(sockd)+" sport:"+lg.c2s(sport)+" dport:"+lg.c2s(dport)
+  lg.logData("* sockd:"+lg.c2s(sockd)+" sport:"+lg.c2s(sport)+" dport:"+lg.c2s(dport)
 		, TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
-	lg.logData("cc_state: "+lg.c2s(tc.cc_state), TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
-  lg.logData("snd_una : "+lg.c2s(tc.snd_una), TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
-	lg.logData("snd_nxt : "+lg.c2s(tc.snd_nxt), TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
-	lg.logData("rcv_nxt : "+lg.c2s(tc.rcv_nxt), TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
-	lg.logData("snd_cwnd: "+lg.c2s(tc.snd_cwnd), TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
-	lg.logData("snd_awnd: "+lg.c2s(tc.snd_awnd), TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
-	lg.logData("snd_ssthresh:"+lg.c2s(tc.snd_ssthresh), TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
+
+	if (tc.cc_state == 1) ccstate = "Slow Start";
+	else if (tc.cc_state == 2) ccstate = "Congestion Avoidance";
+	else if (tc.cc_state == 3) ccstate = "Fast Retransmit";
+	else ccstate = "CC State Error";
+
+	lg.logData("* cc_state: "+ccstate, TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
+  lg.logData("* snd_una : "+lg.c2s(tc.snd_una)+" snd_nxt : "+lg.c2s(tc.snd_nxt)+
+			" rcv_nxt : "+lg.c2s(tc.rcv_nxt), TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
+	lg.logData("* snd_cwnd: "+lg.c2s(tc.snd_cwnd)+" snd_awnd: "+lg.c2s(tc.snd_awnd), 
+			TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
+	lg.logData("* snd_ssthresh:"+lg.c2s(tc.snd_ssthresh),
+			TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
 }

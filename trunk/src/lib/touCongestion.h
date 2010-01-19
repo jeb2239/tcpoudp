@@ -31,7 +31,8 @@
 class ssca {
   private:
 		inline unsigned long ckSize(unsigned long wnd){
-			return ((wnd>(TOU_MAX_CIRCULAR_BUF/2)) ? (unsigned long)(TOU_MAX_CIRCULAR_BUF/2) : wnd);
+			return ((wnd>(TOU_MAX_CIRCULAR_BUF/2)) ? (unsigned long)
+					(TOU_MAX_CIRCULAR_BUF/2) : wnd);
 		}
 
     touCb		*tb;  

@@ -27,7 +27,7 @@ class touCb {
       /*
        *  * Additional var for this implementation
        *   */
-      short				dupackcount;			//duplicate ack(should count to three)
+      short							dupackcount;			//duplicate ack(should count to three)
 
       u_long            snd_wnd;                //sender's window
       u_long            rcv_wnd;                //rcv window

@@ -10,6 +10,7 @@
 
 #include "touSockTable.h"
 #include "Logger.h"
+#include <string>
 #include <unistd.h>
 #include <time.h>
 #include <sys/time.h>
@@ -82,10 +83,22 @@ public:
     ms = getCurMs () + s->tc.t_timeout;
   };
 
+	/**
+	 * node_t (conn_id c, time_id t, seq_id p, sockTb * s, char *pl, long time)
+	 * constructor which inits a new timer node.
+	 */
+	node_t (conn_id c, time_id t, seq_id p, sockTb * s, std::string * pl, long time):
+	c_id (c), t_id (t), p_id (p), st(s){
+    payload = new std::string (*pl);
+		lg.logData ("timer node built ..sockfd is: " + lg.c2s(c) + " sizeof payload is :"
+      + lg.c2s(payload->size()) + " socktb->tc.snd_ack: " + lg.c2s(st->tc.rcv_nxt) +
+			" size of payload: " + lg.c2s(payload->size()),TOULOG_TIMER);
+    ms = time;
+  };
+
   ~node_t (){
     //delete payload; 
   };
-
   conn_id c_id;
   time_id t_id;
   seq_id p_id;
@@ -187,6 +200,11 @@ public:
     return false;
   }
 
+	/**
+	 * rexmit_for_dup_ack(conn_id cid, time_id tid, seq_id pid):
+	 */
+	bool rexmit_for_dup_ack(conn_id cid, time_id tid, seq_id pid);
+
 private:
   void doit();
   node_t							*nt;
@@ -223,6 +241,8 @@ public:
   bool reset (conn_id cid, time_id tid, seq_id pid);
   bool reset (conn_id cid, time_id tid, long ms, seq_id pid);
   bool ck_del_timer (conn_id cid, time_id tid, seq_id pid);
+	bool rexmit_for_dup_ack(conn_id cid, time_id tid, seq_id pid);
+
   bool deleteall ();
   bool resetall ();
 

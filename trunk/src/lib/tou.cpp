@@ -264,22 +264,6 @@ int touMain::touConnect(int sd, struct sockaddr_in *socket1, int addrlen) {
 		perror("Recv SYN ACK: ");
 	}
 
-	/*check for Recovery from Old Duplicate SYN */
-	// /////////////BUG ???//////////////////////// How to make sure it's final 3 way hsk pkt?
-	// how about dup the second time!? third time!?
-	/*
-	if(s->tc.snd_nxt == tp.getAckseq()) 
-		cout << "SYN ACK Received properly SEQ; "<<tp.getSeq()<<" ACK_SEQ: "<<tp.getAckseq()<<  endl;
-	else {
-		// Send reset
-		ackpkt.t.rst = FLAGON;
-		ackpkt.t.ack_seq = tp.t.seq;
-		ackpkt.t.seq = s->tc.snd_nxt;
-		tempdata = ackpkt.toString();
-		rv = sendto(sd, tempdata.data() , tempdata.size(), 0, (struct sockaddr*)socket1, addrlens);
-	}
-	*/
-
 	tp_sa->printall();
 	/* update the pkt.seq to local tcp.rvc_nxt */
 	sm.setTCBRcv(tp_sa->getSeq()+1, sd); // cli's recv seq

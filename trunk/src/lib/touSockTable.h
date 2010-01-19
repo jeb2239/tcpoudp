@@ -67,6 +67,11 @@ class sockTb {
 		~sockTb() {delete sc;}
 		bool ckHpRecvBuf(const touPkg &pkt);//ch if there's dup pkt in HpRecvBuf
 		void pushHpRecvBuf(const touPkg &pkt);
+
+		/* ck_dupack_3: checking the accumulation of duplicate acks */
+		bool ck_dupack_3();
+
+		/* printall: for testing */
 		void printall();
 };
 

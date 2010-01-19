@@ -86,14 +86,10 @@ class touPkg {
 			std::string tempdata;
 			tempdata.clear();
 
-			//tempdata = content.substr(0, 4);
 			memcpy(&(t.seq), &(content[0]), 4);
-			//tempdata = content.substr(4, 4);
 			memcpy(&(t.mag), &(content[4]), 4);
-			//tempdata = content.substr(8, 4);
 			memcpy(&(t.ack_seq), &(content[8]), 4);
 
-			//tempdata = content.substr(13, 1);
 			char tempdata_c[1];
 			memcpy(tempdata_c, &(content[13]), 1);
 
@@ -106,7 +102,6 @@ class touPkg {
 			t.syn = ( ((tempdata_c[0]) & 0x02) == 0x02 )? 1 : 0;
 			t.fin = ( ((tempdata_c[0]) & 0x01) == 0x01 )? 1 : 0;
 
-			//tempdata = content.substr(14, 2);
 			memcpy(&(t.window), &(content[14]), 2);
 
 			if(content.size()-16 > 0){
