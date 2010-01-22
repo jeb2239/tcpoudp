@@ -209,8 +209,10 @@ private:
   void doit();
   node_t							*nt;
   struct sockaddr_in	sockaddrs;
+	sockTb							*socktb;
   int assignaddr (struct sockaddr_in *sockaddr, sa_family_t sa_family,
 		std::string ip, unsigned short port);
+	sockTb* getSocketTable(int conn_id);
 
   /* timer deletion queue
    * nodes here as notification of given nodes are deleted. So while timer

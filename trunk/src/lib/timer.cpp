@@ -18,8 +18,8 @@ void timerCk::doit(){
   while(1){
 		// loop activated if there is timer node in timer heap and timer is fired
 		while(1){
-      boost::mutex::scoped_lock lock(timermutex);
 			if (!( !timerheap.empty() && (timerheap.top().ms <= getCurMs()))) break;
+      boost::mutex::scoped_lock lock(timermutex);
 			// check if there's record in del vector
 			// if yes, pop and discard the fired timer
 			// if no, handle the fired timer(rexmit and reset timer)
@@ -43,8 +43,11 @@ void timerCk::doit(){
 				//reset the timer
 				nt = new node_t(timerheap.top().c_id, timerheap.top().t_id, 
 						timerheap.top().p_id, timerheap.top().st, timerheap.top().payload);
-
 				timerheap.push(*nt);
+
+				//setting timeout congestion control state
+				socktb = getSocketTable(timerheap.top().c_id);
+				if (socktb != NULL) socktb->sc->settwnd();
 
 				/* for test */
 				std::cerr<< "Timer not in delqueue and fired c_id:"<<timerheap.top().c_id <<" "
@@ -132,6 +135,20 @@ bool timerCk::rexmit_for_dup_ack(conn_id cid, time_id tid, seq_id pid) {
 		temptimerheap.pop();
 	}
 	return retbool; 
+}
+
+/**
+ * getSocketTable(int sockfd):
+ * return socktable ptr if matchs with sockfd
+ * return NULL if failure
+ */
+sockTb* timerCk::getSocketTable(int sockfd) {
+	std::vector<sockTb*>::iterator stbiter;
+	for(stbiter=SS.begin(); stbiter!=SS.end(); stbiter++){
+		if((*stbiter)->sockd == sockfd)
+			return (*stbiter);
+	}
+  return NULL;
 }
 
 /**
