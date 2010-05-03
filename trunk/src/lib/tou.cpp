@@ -1,10 +1,14 @@
+/*********************************************************
+ * tou.cpp 
+ * This is a main ToU API where most of the functions used
+ * by application are resided here.
+ * ******************************************************/
 #include "tou.h"
 #define RECVBUFSIZE 2000
 std::vector<sockTb*> SS;
 timerMng tm1;
 boost::mutex socktabmutex1;
 
-FILE *_fptrace = fopen("../debug.txt", "a");
 using namespace std;
 
 void closer::dothis(int sd) {
@@ -25,9 +29,9 @@ void closer::dothis(int sd) {
 			tp.t.fin = 1;
 			tp.t.ack = 1; 
 			tp.t.seq = 2;
-			s->printall();
+			//s->printall();
 			int rv = sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr*)&sockaddrs , sizeof(struct sockaddr_in)); 
-			tp.printall();
+			//tp.printall();
 			//tp.clean();
 			fd_set socks;
 			struct timeval tim;
@@ -42,7 +46,7 @@ void closer::dothis(int sd) {
 				{
 					cout << " Waiting 2 MSL and ack" << endl ;
 					recvfrom(sd,&tp, sizeof(tp),0,(struct sockaddr*)&sockaddrs , &len);
-					tp.printall();
+					//tp.printall();
 					cout << "after recv from" << endl;
 					if(tp.t.ack == 1)
 					{
@@ -71,7 +75,7 @@ void closer::dothis(int sd) {
 			cout << " Receiving Fin ACK " << endl;
 			recvfrom(sd,&tp,sizeof(tp),0,(struct sockaddr *)&socket1,&len);
 			cout <<" after recv from" << endl;
-			tp.printall();
+			//tp.printall();
 			if(tp.t.fin ==1 && tp.t.ack ==1) {
 				sm.setSocketState(TOUS_TIME_WAIT,sd);
 				cout << " Received FIN ACK" << endl;
@@ -80,9 +84,9 @@ void closer::dothis(int sd) {
 			tp.t.ack = 1;
 			tp.t.seq = 3;
 			cout << " Sending ACK " << endl;
-			s->printall();
+			//s->printall();
 			sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr*)&sockaddrs , sizeof(struct sockaddr_in));
-			tp.printall();
+			//tp.printall();
 			sm.delSocketTable(sd);
 			close(sd); 
 			
@@ -121,9 +125,9 @@ int touMain::touClose(int sd) {
 		tp.t.fin = FLAGON;
 		tp.t.ack_seq = tp.t.seq + 1;
 		cout << "Sending Fin " << endl;
-		s->printall();
+		//s->printall();
 		int rv = sendto(sd, &tp, sizeof(tp), 0, (struct sockaddr*)&sockaddrs , sizeof(struct sockaddr_in));
-		tp.printall();
+		//tp.printall();
 		/*Client Side */
 		cout << "Client side baby " << endl;
 		closer *cl = new closer(sd);
@@ -136,42 +140,12 @@ int touMain::touClose(int sd) {
 }
 
 /*
- *Byte stream functions
- *@result converts from byteorder	
- */
-/*
-void touMain::convertFromByteOrder(touPkg &tp) {
-
-	tp.t.seq = ntohl(tp.t.seq);
-	tp.t.mag = ntohl(tp.t.seq);
-	tp.t.ack_seq = ntohl(tp.t.ack_seq);
-	tp.t.syn = ntohs(tp.t.syn);
-	tp.t.ack = ntohs(tp.t.ack);
-}
-*/
-/*
- *Byte stream functions
- *@result //converts to byteorder	
- */
-/*
-void touMain::convertToByteOrder(touPkg &tp) {
-
-	tp.t.seq = htonl(tp.t.seq);
-	tp.t.mag = htonl(tp.t.mag);	
-	tp.t.ack_seq = htonl(tp.t.ack_seq);
-	tp.t.syn = htons(tp.t.syn);
-	tp.t.ack = htons(tp.t.ack);
-}
-*/
-/*
- *Create Socket
- *@result 1 if successful
+ * touSocket:
+ * Create Socket
+ * @result -1 if the creation is not successful.
+ * Last modified: Feb 24, 2010
  */
 int touMain::touSocket(int domain, int type, int protocol) {
-
-	int yes;
-	//int g = 9;
-	//TRACE(5,"KadPeer::OnTimer...transaction map:  LObject map: %d\n", g);
 
 	if ((domain != AF_INET) || (type != SOCK_DGRAM) || (protocol != 0 )) {
 		cout << "ERROR CREATING SOCKET" ;
@@ -179,9 +153,11 @@ int touMain::touSocket(int domain, int type, int protocol) {
 	}
 	sd = socket(domain,type,0);
 	sm.setSocketTable(sd);
-	setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)); 
+	setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, NULL, sizeof(int)); 
+
 	/* init processTou */
 	proTou(sd);
+
 	return sd;
 }
 
@@ -189,13 +165,12 @@ int touMain::touSocket(int domain, int type, int protocol) {
  *Bind Socket
  *return 0 if succesful
  */
-
 int touMain::touBind(int sockfd, struct sockaddr *my_addr, int addrlen) {
 
 	int rv;
 	rv = bind(sockfd,my_addr,addrlen);
 	sm.setSocketTable((sockaddr_in *)my_addr,sockfd);
-	cout << "Bind returns  : " << rv <<endl;
+
 	return rv;
 }
 
@@ -225,27 +200,28 @@ int touMain::touConnect(int sd, struct sockaddr_in *socket1, int addrlen) {
 	sm.setSocketTableD(socket1,sd);		
 	touPkg ackpkt(0);
 	ackpkt.clean();
+
 	srand((unsigned)time(NULL)); 
 	//ackpkt.putHeaderSeq(rand()%(u_long)65535, (u_long)0);  
 	//For test, assigned seq #
-  ackpkt.putHeaderSeq(10000, (u_long)0);	
+  ackpkt.putHeaderSeq(0, (u_long)0);	
 	ackpkt.t.syn = FLAGON;
+
 	sm.setSocketState(TOUS_SYN_SENT,sd);
 	sm.setTCBState(TOU_CC_SS, sd);
 	sm.setTCB((ackpkt.getSeq()+1), ackpkt.getSeq(),sd);
 	sm.setTCBRcv(0, sd);
-	sm.setTCBCwnd(2024, sd);
+	sm.setTCBCwnd((TOU_MSS*2), sd);
 	sm.setTCBAwnd(65535, sd);
-	s->printall();
+	s->log();
 
 	/* Send the SYN */
-	cout<<"Sending SYN to  :  " << inet_ntoa(socket1->sin_addr)<< "  " <<htons(socket1->sin_port) << endl;
+	//cout<<"Sending SYN to  :  " << inet_ntoa(socket1->sin_addr)<< "  " <<htons(socket1->sin_port) << endl;
 	string tempdata = ackpkt.toString();
-	ackpkt.printall();
 	if( -1 <=  (rv = sendto(sd, tempdata.data(), tempdata.size(), 0,(struct sockaddr*)socket1,sizeof(struct sockaddr_in))))
 		perror("send : ");
-	cout << tempdata;
-	cout << "[SYN] size of content: "<< tempdata.size() << " rv: "<< rv << "sizeof: "<< sizeof(tempdata) << endl;
+  //cout << tempdata;
+	//cout << "[SYN] size of content: "<< tempdata.size() << " rv: "<< rv << "sizeof: "<< sizeof(tempdata) << endl;
 
 
 	/*Prepare for receiving */
@@ -255,7 +231,7 @@ int touMain::touConnect(int sd, struct sockaddr_in *socket1, int addrlen) {
 		tp_sa = new touPkg(tempdata);
 		sockTb *s = sm.getSocketTable(sd);
 		sm.setTCBRcv(tp_sa->t.seq,sd);
-		cout << "[SYN ACK] size of content: "<< tempdata.size() << " rv: "<< rv << "sizeof: "<< sizeof(tempdata) << endl;
+		//cout << "[SYN ACK] size of content: "<< tempdata.size() << " rv: "<< rv << "sizeof: "<< sizeof(tempdata) << endl;
 
 		if((s->sockstate) == TOUS_CLOSE_WAIT)
 			cout <<"Other end shutdown !! "<< endl;
@@ -264,7 +240,6 @@ int touMain::touConnect(int sd, struct sockaddr_in *socket1, int addrlen) {
 		perror("Recv SYN ACK: ");
 	}
 
-	tp_sa->printall();
 	/* update the pkt.seq to local tcp.rvc_nxt */
 	sm.setTCBRcv(tp_sa->getSeq()+1, sd); // cli's recv seq
 	sm.setTCB(s->tc.snd_nxt, tp_sa->getAckseq(), sd); //cli's send seq(here just update ackseq)
@@ -275,12 +250,11 @@ int touMain::touConnect(int sd, struct sockaddr_in *socket1, int addrlen) {
 	ackpkt.t.syn = FLAGOFF;
 	ackpkt.t.ack = FLAGON;
 	
-	s->printall();
+	s->log();
 	string tempdata_ack = ackpkt.toString();
 	/*send ACK - final 4way handshake */
 	if( -1 >= (rv = sendto(sd, tempdata_ack.data(), tempdata_ack.size() , 0, (struct sockaddr*)socket1, addrlens)))
 		perror("send : ");
-	ackpkt.printall();
 
 	if(rv>1) {
 		sm.setSocketState(TOUS_ESTABLISHED,sd);
@@ -320,13 +294,12 @@ int touMain::touAccept(int sd, struct sockaddr_in *socket2, socklen_t *addrlen) 
 	srand((unsigned)time(NULL)); 
 	randnum = rand()%(u_long)65535;
 	sm.setTCB(randnum, randnum,sd); // it's own set.
-	sm.setTCBCwnd(2024, sd);
+	sm.setTCBCwnd((TOU_MSS*2), sd);
 	sm.setTCBAwnd(65535, sd);
 	assignaddr(&sockaddrs,AF_INET,s->dip,s->dport);
 
 	if(s->sockstate == TOUS_SYN_RECEIVED) {
 		cerr<< "Recv the first SYN \n\n";
-		s->printall();
 
 		/* send SYN ACK: set up the ack pkt */
 		ackpkt.clean();
@@ -336,12 +309,10 @@ int touMain::touAccept(int sd, struct sockaddr_in *socket2, socklen_t *addrlen) 
 		
 		/* update the local TCB, and ready to send */
 		sm.setTCB(s->tc.snd_nxt+1, s->tc.snd_una, sd);
-		cout <<"Sending SYN ACK: Destination :  " << s->dip << "  " << s->dport << endl;
+		//cout <<"Sending SYN ACK: Destination :  " << s->dip << "  " << s->dport << endl;
 		string sendcontent = ackpkt.toString();
 		if( -1 >= (rv = sendto(sd, sendcontent.data(), sendcontent.size(), 0, (struct sockaddr *)&sockaddrs, len)))
 			perror("send : ");
-		ackpkt.printall();
-		s->printall();
 
 		/*recv final(ACK) handshake */
 		rv = recvfrom(sd, recvcontent, RECVBUFSIZE, 0, (struct sockaddr *)socket2, addrlen);
@@ -357,8 +328,7 @@ int touMain::touAccept(int sd, struct sockaddr_in *socket2, socklen_t *addrlen) 
 			cl->m_thread1.join();
 		}
 
-		cerr<< "Recving the final ACK \n\n";
-		tp_ack.printall();
+		//cerr<< "Recving the final ACK \n\n";
 
 		if ((s->tc.snd_una+1) == tp_ack.getAckseq()){
 			/* Connection ControlTabe Update */
@@ -372,7 +342,7 @@ int touMain::touAccept(int sd, struct sockaddr_in *socket2, socklen_t *addrlen) 
 		}
 
 		sm.setSocketState(TOUS_ESTABLISHED,sd);
-		s->printall();
+		s->log();
 		return true;
 	}
 
@@ -380,51 +350,48 @@ int touMain::touAccept(int sd, struct sockaddr_in *socket2, socklen_t *addrlen) 
 }
 
 /* 
- * Send()
- * @result return no of bytes successfully sent  
+ * touSend():
+ * It simply puts the data onto circular buffer available, and returns the
+ * number of bytes that been put successfully.
+ * @result return number of bytes successfully sent  
  */
-int touMain::touSend(int sd, char *sendBufer, int len1, int flags) { 
+int touMain::touSend(int sd, char *sendBufer, int len, int flags) { 
+	int lenr = -1;
 
-	std::cout << "INSIDE touSend function ..... " << endl;
-	int len = len1; //length of sendBufer
-	int lenr = pushsndq(sd , sendBufer,  len);
+	lenr = pushsndq(sd , sendBufer,  len);
 	ptou->send(sd);
-	std::cout << "LEAVE touSend function, data push into circular buff\n";\
+
 	return lenr;
 }
 
 /* 
  * Receive()
  * Simply fetch data from circular buffer
- * @result return no of bytes successfully received
- * revised @	1. Nov 24, 2009
- *						2. Jan 07, 2010 
+ * @return number of bytes on successfully read
+ * @return -1 on error
+ * @return 0 on connection close
  */
 int touMain::touRecv(int sd, char *recvBuffer, int bufferLength, int flags) {
-	int end;
-	int readsize = 0 ;
+	int end, readsize = 0, clearrs = 0;
 	sockTb *s = sm.getSocketTable(sd);
 
-	readsize = s->CbRecvBuf.getAt(recvBuffer,bufferLength,end);
-	s->CbRecvBuf.remove(readsize);
-
-	/* following is for test */
-	if(readsize == bufferLength)
-		std::cout << "[touRecv Test] READ complete file\n";
-	else
-		std::cout << "[touRecv Test] READ partial file XXX\n";
-	/* end of test */
-
-	if(s->sockstate == TOUS_CLOSE_WAIT){
-		cout << " TOU Recv has received close from the remote side ..." << endl;
-		return 0;
+	if (s != NULL ) {
+		readsize = s->CbRecvBuf.getAt(recvBuffer,bufferLength,end);
+		clearrs = s->CbRecvBuf.remove(readsize);
+		if (clearrs != readsize) 
+			readsize = -1;
 	}
+
+	if(s->sockstate == TOUS_CLOSE_WAIT){ /***** To chinmay: is this the only condition?*/
+		readsize = 0;
+	}
+
 	return readsize;
 }/* End of touRecv */
 
 
+/* Deletion pending.
 int touMain::timero(int fd, int usec) {
-
 	fd_set                timeo_rset;
 	struct timeval        tv;
 	FD_ZERO(&timeo_rset);
@@ -433,11 +400,13 @@ int touMain::timero(int fd, int usec) {
 	tv.tv_usec = usec;
 	return (select(fd+1, &timeo_rset, NULL, NULL, &tv));
 }
+*/
 
 /* 
  *get the sockaddr_in infomation 
  */
-int touMain::assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_family, string ip, u_short port) {
+int touMain::assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_family, 
+		string ip, u_short port) {
 
 	bzero(sockaddr, sizeof(*sockaddr));
 	sockaddr->sin_family = sa_family;
@@ -447,7 +416,8 @@ int touMain::assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_family, str
 	return 1;
 }
 
-int closer::assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_family, string ip, u_short port) {
+int closer::assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_family, 
+		string ip, u_short port) {
 
 	bzero(sockaddr, sizeof(*sockaddr));
 	sockaddr->sin_family = sa_family;
@@ -457,16 +427,20 @@ int closer::assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_family, stri
 	return 1;
 }
 
-/*
- *called during tou_bind()
+/**
+ * pushsndq:
+ * It performs the task of putting data into circular buffer. The operation
+ * should be cooperated with thread lock/unlock.
+ * @return number of bytes been put into circular buffer.
  */
 int touMain::pushsndq(int sockfd, char *sendbuf, int &len) {
 	int an = 0; //actual number of bytes been sent
-	sockTb *socktb;
-	socktb = sm.getSocketTable(sockfd);
+	sockTb *socktb = sm.getSocketTable(sockfd);
+
 	/* insert the data into circular buf */
-	if( 0 < socktb->CbSendBuf.getAvSize()){
+	if (socktb != NULL)
 		an = socktb->CbSendBuf.insert(sendbuf, len);
-	}
+
 	return an;
 }
+

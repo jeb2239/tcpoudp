@@ -35,13 +35,18 @@ CircularBuffer::~CircularBuffer() {
   //been allocated. Allocate it now.
  */
 
-int CircularBuffer::insert(char* buf, int n) {
+int CircularBuffer::insert(const char* buf, int n) {
   boost::mutex::scoped_lock lock(insertqmutex);
-  int start, end;
-  return insert(buf, n, start, end);
+  int start, end, ret = 0;
+
+	/* Check whether the size is available or not in circular buffer */
+	if (0 < getAvSize()) 
+		ret = insert(buf, n, start, end);
+
+	return ret;
 }//insert
 
-int CircularBuffer::insert(char* buf, int n, int& start, int& end) {
+int CircularBuffer::insert(const char* buf, int n, int& start, int& end) {
   int an=0; //actual number of elements that can be inserted in the queue
 
   //if number of elements to be inserted is less than or equal to
@@ -238,7 +243,6 @@ int CircularBuffer::getSize() {
  * Get the size which are available in the queue
  */
 int CircularBuffer::getAvSize() {
-	boost::mutex::scoped_lock lock(insertqmutex);
   return m_uiSize-m_uiTotEl;
 }
 

@@ -6,6 +6,7 @@
  */
 
 #include "timer.h"
+#include "Logger.h"
 using namespace std;
 /**
  * A periodic loop function for cheing fired timer in timer thread.
@@ -14,11 +15,20 @@ void timerCk::doit(){
 	boost::asio::io_service io;
 	boost::asio::deadline_timer t(io, boost::posix_time::milliseconds(TIMER_WT));
 	int bufsize;
+	long pktTime;
 	
   while(1){
 		// loop activated if there is timer node in timer heap and timer is fired
 		while(1){
-			if (!( !timerheap.empty() && (timerheap.top().ms <= getCurMs()))) break;
+
+			//if there's a fired timer already, t_timeout_postone should be one, or
+			//this value should be zero, meaning the first timeo within this wnd(RTT)
+			pktTime = timerheap.top().ms + 
+				(timerheap.top().st->tc.t_timeout_postpone*timerheap.top().st->tc.t_timeout);
+
+			if (!( !timerheap.empty() && (pktTime <= getCurMs()))) break;
+			//if(timermutex.try_lock()) 
+			//{
       boost::mutex::scoped_lock lock(timermutex);
 			// check if there's record in del vector
 			// if yes, pop and discard the fired timer
@@ -49,14 +59,20 @@ void timerCk::doit(){
 				socktb = getSocketTable(timerheap.top().c_id);
 				if (socktb != NULL) socktb->sc->settwnd();
 
+				//setting t_timeout_postpone
+				socktb->tc.t_timeout_postpone++;
+
 				/* for test */
 				std::cerr<< "Timer not in delqueue and fired c_id:"<<timerheap.top().c_id <<" "
 					<< timerheap.top().p_id <<" timer id : " <<timerheap.top().t_id << " fired."
 					<< "CurTime: "<<getCurMs()<<"; Timer: "<<timerheap.top().ms<<"Buffer size: "<< 
 					bufsize << " Buffer: "<< toupkt.buf <<std::endl;
+				socktb->log(TOULOG_PTSRN);
 				/* end of for test */
 			}	
-				timerheap.pop();
+			//timermutex.unlock();
+			//}//mutex locker
+			timerheap.pop();
 		}
 
 		//synchronous wait for TIMER_WT ms
@@ -90,9 +106,15 @@ bool timerCk::rexmit_for_dup_ack(conn_id cid, time_id tid, seq_id pid) {
 	int bufsize;
 	bool retbool = false;
 
+	//boost::mutex::scoped_lock lock(timermutex);
+
+	//cerr << "(conn_id cid, time_id tid, seq_id pid): " << cid << " " << tid << " " << pid << endl;
+	//cerr << "  timerheap.size()  " <<  timerheap.size() << endl;
+
 	for(int i=0; i < timerheap.size(); i++){
 		bufsize = timerheap.top().payload->size();
 
+		//cerr << "i:" << i << " (conn_id cid, time_id tid, seq_id pid): " << timerheap.top().c_id << " " << timerheap.top().t_id << " " << timerheap.top().p_id-bufsize << endl;
 		if ((timerheap.top().c_id == cid) && (timerheap.top().t_id == tid) &&
 				( (timerheap.top().p_id-bufsize) == pid)) {
 			// find the packet(timer node) which should be rexmitted as receiving
@@ -119,6 +141,7 @@ bool timerCk::rexmit_for_dup_ack(conn_id cid, time_id tid, seq_id pid) {
 				<< "CurTime: "<<getCurMs()<<"; Timer: "<<timerheap.top().ms<<"Buffer size: "<< 
 				bufsize << " Buffer: "<< toupkt.buf <<std::endl;
 			/* end of for test */
+
 			timerheap.pop();
 			retbool = true;
 			break;

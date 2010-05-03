@@ -19,8 +19,11 @@
 #define TOU_RMSS			1456
 #define TOU_MAX_SSTHRESH	65536
 
-#define TOU_INIT_TIMEO		3000				//initial pkt timer out. 3000ms, 3sec
-#define TOU_MAX_CIRCULAR_BUF	40960		//TOU's circular buffer size: 40k
+#define TOU_INIT_TIMEO		1000				//initial pkt timer out. 1000ms, 1sec
+#define TOU_INIT_TIMEO_PP	0						//initial pkt time out postpone coefficient
+
+#define TOU_MAX_CIRCULAR_BUF	2097152	//TOU's circular buffer size: 2M
+//#define TOU_MAX_CIRCULAR_BUF	65536	//TOU's circular buffer size: 64k
 
 /* Congestion Control Window States */
 #define TOU_CC_ERR	0

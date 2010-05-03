@@ -15,10 +15,10 @@
 
 /* public log flag for user program */
 extern unsigned short LOGFLAG;
+extern bool						LOGON;
 
 class Logger{
 private:
-	unsigned short	logstate;
 	void logFile(std::string data);
 	void logFileTimer(std::string data);
 	void logFilePktsent(std::string data);
@@ -72,3 +72,6 @@ public:
 };
 
 #endif /*LOGGER_H_*/
+
+extern Logger lg;
+

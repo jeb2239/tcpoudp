@@ -1,4 +1,8 @@
 /******************************************************
+		d, st, payload);
+		(cid, tid, pid, st, payload);
+		(cid, tid, pid, st, payload);
+		string sendcontent = toupkg->toString();
  *  * ToU control block
  *   * ***************************************************/
 #define TOUT_TIMERS	4
@@ -8,10 +12,13 @@ class touCb {
       short							cc_state;								//3 congestion states
       short             t_timer[TOUT_TIMERS];   //4 timers
 			unsigned long			t_timeout;							//current timeout(ms)
+			u_short						t_timeout_postpone;			//one timer per winsow
+			u_long						t_timeout_seq;					//which current seq causing timeout
       u_short           t_flags;                //pending
-  /*
-   *  * WND & SEQ control. See RFC 783
-   *   */
+
+			/*
+			 * *  * WND & SEQ control. See RFC 783
+			 * *   */
 			/*NOTE: Chinmay should put ur init rand # here. Don't just assign directly */
       u_long            iss;                    //initial send seq #
       u_long            irs;                    //initial rcv seq #

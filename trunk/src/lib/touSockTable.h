@@ -49,30 +49,34 @@ class sockTb {
 		touPkg	duppkt;
 
 	public:
-		touCb		tc;					//tcp control block
 		int			sockd;			//socket file descriptor
 		int			sockstate;  //SOCK_CREATED, BIND, LISTEN, CONNECT, ESTABLISHED, TERMINATING
-		u_short	sport;
-		u_short dport;      //destination port
-		std::string  sip;
-		std::string  dip;		//destination ip 
-		int			cid;				//connection id. probably dont need it
 		int     tcpstate;   //state in which the connection is   
-		CircularBuffer 	CbSendBuf;
-		CircularBuffer 	CbRecvBuf;
+		u_short	sport;			//souce port number
+		u_short dport;      //destination port number
+		std::string  sip;		//source ip address
+		std::string  dip;		//destination ip address
+		CircularBuffer 	CbSendBuf;	//circular buffer for sending
+		CircularBuffer 	CbRecvBuf;	//circular buffer for recving
 		minPkgHeapType	HpRecvBuf;
-		ssca	*sc;					//congestion control class
+		ssca		*sc;				//congestion control management 
+		touCb		tc;					//tcp control block management
 		int pfd[2];
+
 		sockTb();
+
 		~sockTb() {delete sc;}
+
 		bool ckHpRecvBuf(const touPkg &pkt);//ch if there's dup pkt in HpRecvBuf
+
 		void pushHpRecvBuf(const touPkg &pkt);
 
 		/* ck_dupack_3: checking the accumulation of duplicate acks */
 		bool ck_dupack_3();
 
-		/* printall: for testing */
-		void printall();
+		/* logging mechanism. it prints all regarding the socket tables */
+		void log();
+		void log(unsigned short logflag);
 };
 
 /* SS is Socket Table for storing socket informaiton */
@@ -100,9 +104,11 @@ class sockMng {
 		void setTCBRcv(unsigned long, int);								/* set rcv_nxt in socket table */
 
 		/* insert data, data's len */ 
-		int setCbData(char *, int, int);
-	private:
+		int setCbData(const char *, int, int);
+	//private:
 		sockTb *s;
+		
+	private: // should change back
 		std::vector<sockTb*>::iterator stbiter;
 		boost::mutex soctabmutex;
 

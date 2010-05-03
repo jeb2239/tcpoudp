@@ -1,15 +1,17 @@
 #include "Logger.h"
+#include "timestamp.h"
 #include <string>
 #include <stdio.h>
+#include <bitset>
 #include <iostream>
 
 Logger lg;
-unsigned short LOGFLAG;
+unsigned short	LOGFLAG;
+bool						LOGON;
 
 using namespace std;
 Logger::Logger()
 {
-	logstate = LOGFLAG;
 	file.open("./Tou.log");
 	file_timer.open("./Tou_timer.log");
 	file_pktsent.open("./Tou_pktsent.log");
@@ -25,8 +27,8 @@ Logger::Logger()
 	file_socktb.flush();
 }
 
-Logger::~Logger()
-{
+Logger::~Logger(){
+	shutdownLogger();
 }
 
 Logger Logger::logger;
@@ -47,7 +49,7 @@ void Logger::shutdownLogger()
 }
 
 void Logger::logFile(string data){
-	file << data << endl;
+	file << timestamp() <<  data << endl;
 	file.flush();
 }
 void Logger::logFileTimer(string data){
@@ -73,34 +75,36 @@ void Logger::logFileSocktb(string data){
 
 
 void Logger::logData(string data, unsigned short LoggingLevel){
-	logstate =  logstate | LoggingLevel;
+	if (LOGON == false)  return;
+	unsigned short logs =  (LOGFLAG | LoggingLevel);
+	//cout << std::bitset<4>(logs) << endl;
 	
-	while( logstate != 0x0000 ){
-		if ((logstate & TOULOG_ALL) == TOULOG_ALL){
+	while( logs != 0x0000 ){
+		if ((logs & TOULOG_ALL) == TOULOG_ALL){
 				// log all
 				logFile(data);
-				logstate = logstate & ~TOULOG_ALL;
-		}else if ((logstate & TOULOG_TIMER) == TOULOG_TIMER){
+				logs = logs & ~TOULOG_ALL;
+		}else if ((logs & TOULOG_TIMER) == TOULOG_TIMER){
 				logFileTimer(data);
-				logstate = logstate & ~TOULOG_TIMER;
-		}else if ((logstate & TOULOG_PKTSENT) == TOULOG_PKTSENT){
+				logs = logs & ~TOULOG_TIMER;
+		}else if ((logs & TOULOG_PKTSENT) == TOULOG_PKTSENT){
 				logFilePktsent(data);
-				logstate = logstate & ~TOULOG_PKTSENT;
-		}else if ((logstate & TOULOG_PKTRECV) == TOULOG_PKTRECV){
+				logs = logs & ~TOULOG_PKTSENT;
+		}else if ((logs & TOULOG_PKTRECV) == TOULOG_PKTRECV){
 				logFilePktrecv(data);
-				logstate = logstate & ~TOULOG_PKTRECV;
-		}else if ((logstate & TOULOG_PKT) == TOULOG_PKT){
+				logs = logs & ~TOULOG_PKTRECV;
+		}else if ((logs & TOULOG_PKT) == TOULOG_PKT){
 				logFilePkt(data);
-				logstate = logstate & ~TOULOG_PKT;
-		}else if ((logstate & TOULOG_SOCKTB) == TOULOG_SOCKTB){
+				logs = logs & ~TOULOG_PKT;
+		}else if ((logs & TOULOG_SOCKTB) == TOULOG_SOCKTB){
 				logFileSocktb(data);
-				logstate = logstate & ~TOULOG_SOCKTB;
-		}else if ((logstate & TOULOG_PTSRN) == TOULOG_PTSRN){
+				logs = logs & ~TOULOG_SOCKTB;
+		}else if ((logs & TOULOG_PTSRN) == TOULOG_PTSRN){
 				 //PRINT TO TERMINAL
 				std::cerr << data << endl;
-				logstate = logstate & ~TOULOG_PTSRN;
+				logs = logs & ~TOULOG_PTSRN;
 		}else{
-				std::cerr << "[Logger]: logstate error\n";
+				std::cerr << "[Logger]: logs error\n";
 				break;
 		}
 	}/* End of While */

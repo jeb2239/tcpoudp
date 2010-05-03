@@ -7,6 +7,7 @@
  */
 
 #include "tou.h"
+using namespace std;
 
 /**
  * sockTb():
@@ -17,6 +18,8 @@ sockTb::sockTb() {
 	CbRecvBuf.setSize(TOU_MAX_CIRCULAR_BUF);
 	sc = new ssca(&tc);
 	tc.t_timeout = TOU_INIT_TIMEO;
+	tc.t_timeout_postpone = TOU_INIT_TIMEO_PP;
+	tc.t_timeout_seq = 0;
 }
 
 /**
@@ -159,7 +162,7 @@ void sockMng::setTCBState(int state , int sd)  {
 /**
  * setCbData(char *buf,int len,int sd):
  */
-int sockMng::setCbData(char *buf,int len,int sd) { 
+int sockMng::setCbData(const char *buf, int len, int sd) { 
 	boost::mutex::scoped_lock lock(soctabmutex);    
 	int len1 = len;  
 	s = getSocketTable(sd);
@@ -170,9 +173,10 @@ int sockMng::setCbData(char *buf,int len,int sd) {
 /**
  * pushHpRecvBuf(touPkg pkt)
  */
-void sockTb::pushHpRecvBuf(const touPkg &pkt){
+void sockTb::pushHpRecvBuf(const touPkg &pkt_){
 	boost::mutex::scoped_lock lock(stmutex);
-	HpRecvBuf.push(pkt);
+	touPkg tp(pkt_);
+	HpRecvBuf.push(tp);
 }
 
 /**
@@ -182,29 +186,70 @@ void sockTb::pushHpRecvBuf(const touPkg &pkt){
  * return false on otherwise.
  */
 bool sockTb::ck_dupack_3() {
-	return (tc.dupackcount ==3)? true: false;
+	return (tc.dupackcount == 3)? true: false;
 }
 
 /**
  * printall()
  * for testing, and it will log the msg into related files
  */
+/*
 void sockTb::printall() {
 	string ccstate;
-	lg.logData("*** SOCKET TABLE RESULT ***", TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
+	lg.logData("*** SOCKET TABLE RESULT ***", TOULOG_ALL|TOULOG_SOCKTB);
   lg.logData("* sockd:"+lg.c2s(sockd)+" sport:"+lg.c2s(sport)+" dport:"+lg.c2s(dport)
-		, TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
+		, TOULOG_ALL|TOULOG_SOCKTB);
 
 	if (tc.cc_state == 1) ccstate = "Slow Start";
 	else if (tc.cc_state == 2) ccstate = "Congestion Avoidance";
 	else if (tc.cc_state == 3) ccstate = "Fast Retransmit";
 	else ccstate = "CC State Error";
 
-	lg.logData("* cc_state: "+ccstate, TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
+	lg.logData("* cc_state: "+ccstate, TOULOG_ALL|TOULOG_SOCKTB);
   lg.logData("* snd_una : "+lg.c2s(tc.snd_una)+" snd_nxt : "+lg.c2s(tc.snd_nxt)+
-			" rcv_nxt : "+lg.c2s(tc.rcv_nxt), TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
+			" rcv_nxt : "+lg.c2s(tc.rcv_nxt), TOULOG_ALL|TOULOG_SOCKTB);
 	lg.logData("* snd_cwnd: "+lg.c2s(tc.snd_cwnd)+" snd_awnd: "+lg.c2s(tc.snd_awnd), 
-			TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
+			TOULOG_ALL|TOULOG_SOCKTB);
 	lg.logData("* snd_ssthresh:"+lg.c2s(tc.snd_ssthresh),
-			TOULOG_ALL|TOULOG_SOCKTB|TOULOG_PTSRN);
+			TOULOG_ALL|TOULOG_SOCKTB);
+}
+*/
+
+/**
+ * log():
+ * Default logging mechanism. It'll log to TOULOG_SOCKTB only
+ */
+void sockTb::log() {
+	log(0);
+}
+
+/**
+ * log(logflag):
+ * Additionaly specify the file that been logged.
+ * ex: log(TOULOG_ALL)
+ */
+void sockTb::log(unsigned short logflag) {
+	string ccstate;
+	unsigned short def_logflag = TOULOG_SOCKTB;
+	def_logflag = (def_logflag | logflag);
+
+	lg.logData("*** SOCKET TABLE RESULT ***", def_logflag);
+  lg.logData("* sockd:"+lg.c2s(sockd)+" sport:"+lg.c2s(sport)+" dport:"+lg.c2s(dport)
+		, def_logflag);
+
+	if (tc.cc_state == 1) ccstate = "Slow Start";
+	else if (tc.cc_state == 2) ccstate = "Congestion Avoidance";
+	else if (tc.cc_state == 3) ccstate = "Fast Retransmit";
+	else ccstate = "CC State Error";
+
+	lg.logData("* cc_state: "+ccstate, def_logflag);
+  lg.logData("* snd_una : "+lg.c2s(tc.snd_una)+" snd_nxt : "+lg.c2s(tc.snd_nxt)+
+			" rcv_nxt : "+lg.c2s(tc.rcv_nxt), def_logflag);
+	lg.logData("* snd_cwnd: "+lg.c2s(tc.snd_cwnd)+" snd_awnd: "+lg.c2s(tc.snd_awnd), 
+			def_logflag);
+	lg.logData("* snd_ssthresh:"+lg.c2s(tc.snd_ssthresh),
+			def_logflag);
+	lg.logData("* tc.dupackcount: "+lg.c2s(tc.dupackcount), 
+			def_logflag);
+
 }

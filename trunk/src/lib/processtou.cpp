@@ -2,16 +2,26 @@
 boost::mutex recvqmutex;
 boost::mutex sndqmutex;
 #define RECVBUFSIZE	2000
+using namespace std;
 
 /* PKTLOSTTEST test */
 int pktlosttest_int = 1;
+static int counter = 0;
+/* END PKTLOSETEST test */
+static int cwnd_counter = 0;
+/* congestion window counter */
+// for midterm demo
+extern FILE *ofile;
+extern FILE *ofile_cwnd;
+//
+
 
 /**
  * processTou
- * responsible for receiving/sending of packets from circular buffer
+ * responsible for receiving/sending of packets through circular buffer
  */
 void processTou::run(int sockfd) {
-	int			rv;					//bytes recved from other side, (NOT payload size)
+	int			rv;					//bytes recved from other side(not payload size)
 	int			rvpl;				//byte recved form other side, payload size
 	int			rvplq;			//byte stored in HpRecvBuf, payload size
 	int			lenofcb;		//size of circular buffer
@@ -19,32 +29,31 @@ void processTou::run(int sockfd) {
 	size_t	len = sizeof(sockaddrs);//sockaddr's size
 	char		recvbuf[RECVBUFSIZE];
 	char		recvcontent[RECVBUFSIZE];
-	touPkg	*tp;
-	memset(recvcontent, 0, RECVBUFSIZE);
-	string	pkgackcontent;
-
-	socktb = sm->getSocketTable(sockfd);
+	touPkg	*tp;				//packet for receiving data
 	touPkg	pkgack(0);	//packet for sending ACK
+	string	pkgackcontent;
+	socktb = sm->getSocketTable(sockfd);
 
-	cout << "*** processTou Start Processtou now Waiting for data from client *** "  << endl;
+	lg.logData("[PROCESSTOU MSG] ****** PROCESSTOU START ******", TOULOG_ALL);
+
 	/* Waiting for incoming data */
-	rv = recvfrom(sockfd, recvcontent, RECVBUFSIZE, 0, (struct sockaddr*)&sockaddrs,&len);
+	memset(recvcontent, NULL, RECVBUFSIZE);
+	rv = recvfrom(sockfd, recvcontent, RECVBUFSIZE, 0, 
+			(struct sockaddr*)&sockaddrs,&len);
 
+	/* Convert char* to packet struct */
 	string content(recvcontent, rv);
 	tp = new touPkg(content); 
+	tp->log(TOULOG_ALL);
 
-	/* test print it out */
-  //cout << "size of content: "<<content.size() << " size of recvsize: "<<rv <<endl; //<<recvcontent<<endl<<endl<<content<<endl;
-	tp->printall();
-	cout << "Received pkt size: "<<rv <<" from : " << inet_ntoa(sockaddrs.sin_addr) <<  " " << htons(sockaddrs.sin_port) << endl; 
-	/* end of test */
-	
+	/* Base on the packet received, decide what's the current state.
+	 * Then pass it into a FSM for subsequent processing. */
 	state = processGetPktState(tp);
 	while( state != PROCESS_END ){
 	switch(state){
-		case PROCESS_SYN: /* Connection Control */
+		case PROCESS_SYN: /* Connection Control: Chinmay add here.*/
 			//Check if the connection is in estabished state
-			cout << "[PROCESSTOU MSG] PROCESS_SYN: SYN Received "  << endl;
+			//cout << "[PROCESSTOU MSG] PROCESS_SYN: SYN Received "  << endl;
 			//if(socktb->sockstate == TOUS_ESTABLISHED)
 			{
 				//Do nothing	
@@ -59,18 +68,22 @@ void processTou::run(int sockfd) {
 			state = PROCESS_END;
 		break;
 		
-		case PROCESS_FIN: /* Connection Control */
-			cout<< "[PROCESSTOU MSG] PROCESS_FIN: Received Fin " << endl ;
-			tp->printall();
+		case PROCESS_FIN: /* Connection Control: Chinmay add here. */
+			//cout<< "[PROCESSTOU MSG] PROCESS_FIN: Received Fin " << endl ;
 			/* Check for FIN flag (Close) : */
-			cout<<"Closing Connection... " << endl;        
+			//cout<<"Closing Connection... " << endl;        
 			sm->setSocketState(TOUS_CLOSE_WAIT,sockfd);
 			state = PROCESS_END;
 		break;
 		
+
+		/* While receiving the ack from the peer host, it firstly checks whether a
+		 * packet is duplicate by looking into the del_timer_queue(buf). If it's
+		 * duplicate packet, then I need to check whether the number of duplicate
+		 * packet is exceed three. If yes, perform fast retransmit. */
 		case PROCESS_ACK_WITHOUT_DATA:
 			lg.logData("[PROCESSTOU MSG] PROCESS_ACK_WITHOUT_DATA: new ACK", 
-					TOULOG_ALL|TOULOG_PTSRN);
+					TOULOG_ALL);
 
 			/* Checking whether this pkt is existed in del timer queue(buf) */
 			if (!tm1.ck_del_timer(sockfd, 88, tp->t.ack_seq)) {
@@ -89,11 +102,19 @@ void processTou::run(int sockfd) {
 
 				lg.logData("[PROCESS_ACK_WITHOUT_DATA] DUPLICATE ACK: " + 
 						lg.c2s(tp->t.ack_seq) + " Duplicate ACKs count #: " + 
-						lg.c2s(socktb->tc.dupackcount), TOULOG_ALL|TOULOG_PTSRN);
+						lg.c2s(socktb->tc.dupackcount), TOULOG_ALL);
 			}
-			socktb->printall();
+
+			/* Fired pkt handling,
+			 * while receiving pkg with seq # <= t_timeout_seq, it means that the
+			 * fired pkt is received. Then we should decrease t_timerout_postpone
+			 * by one. */
+			if (tp->t.ack_seq <= socktb->tc.t_timeout_seq && 
+					0 < socktb->tc.t_timeout_postpone)
+				socktb->tc.t_timeout_postpone--;
+
 			lg.logData("[PROCESS_ACK_WITHOUT_DATA] Try to send data left in circ buff",
-					TOULOG_ALL|TOULOG_PTSRN);
+					TOULOG_ALL);
 
 			/* Because window size is updated, try to send data left in circ buf */
 			send(sockfd);
@@ -101,20 +122,25 @@ void processTou::run(int sockfd) {
 			state = PROCESS_END;
 		break;
 		
+		/* When there's a packet containing data coming, it will pry about the
+		 * out-of-order buffer(HpRecvBuf) and see if the recovery is possible.
+		 * If the recovery is possible, it will use a while loop to recover the
+		 * out-of-order data until the mismatch occurs.*/
 		case PROCESS_ACK_WITH_DATA_MATCH_EXPECTED_SEQ:
 			lg.logData("[PROCESSTOU MSG] PROCESS_ACK_WITH_DATA_MATCH_EXPECTED_SEQ", 
-					TOULOG_ALL|TOULOG_PTSRN);
+					TOULOG_ALL);
 			rvpl = tp->buf->size(); //get pkt payload size
 
-			/* test sent pkt lost */
-			if(tp->t.seq == 18417 && pktlosttest_int ){
-			std::cout << "\n *** pkg 18417 lost test: no ack once PKTLOSTTEST ****\n";
-			std::cout << " *** pkg 18417 lost test: no ack once PKTLOSTTEST ****\n\n";
-			/* FOR TEST */goto PKTLOSTTEST;
+			// ******************************throughput test
+			if (calThroughput()) {
+				cout << "[PROCESS_ACK_WITH_DATA_MATCH_EXPECTED_SEQ] goto PKTLOSTTEST;" << endl;
+				socktb->log(TOULOG_ALL|TOULOG_PTSRN);
+				goto PKTLOSTTEST;
 			}
+			// ******************************End of throughput test
 
-			/* try recovery from duplicate pkt first
-			 * HpRecvBuf is not empty, and get the correct seq. Start recovery */
+			/* Try recovery from out-of-order buffer(HpRecvBuf). If the HpRecvBuf is
+			 * not empty, plus the seq number is matched. Start recovery */
 			if (!socktb->HpRecvBuf.empty()) {
 				lg.logData(" >>> Processtou Recovery Start >>> Recovering from seq#: " +
 						lg.c2s(socktb->tc.rcv_nxt), TOULOG_ALL|TOULOG_PTSRN);
@@ -122,9 +148,8 @@ void processTou::run(int sockfd) {
 				sm->setTCBRcv(tp->t.seq + rvpl, sockfd);
 				lenofcb = putcircbuf(socktb, sockfd, tp->buf, rvpl);
 
-				/* recovery form HpRecvBuf
-				 * out of order pkt: looply ck pkt in HpRecvBuf, and try to put pkt back
-				 * to circular buf. */
+				/* Recover form the HpRecvBuf: Try to put the out-of-order data back into
+				 * circular buffer until the matching is failure. */
 				while ((socktb->HpRecvBuf.top().t.seq) == (socktb->tc.rcv_nxt)) {
 					lg.logData(" >>> Processtou Recovery >>> seq#: " + 
 							lg.c2s(socktb->HpRecvBuf.top().t.seq) + " elm#: " + 
@@ -149,7 +174,7 @@ void processTou::run(int sockfd) {
 				}/* End of while */
 
 			}else{
-				/* Handle in-order pkt (not recovery needed) */
+				/* Handle in-order pkt (no recovery needed) */
 				/* in-order pkt: expecting rcv_nxt number */
 				sm->setTCBRcv(tp->t.seq + rvpl, sockfd);
 				lenofcb = putcircbuf(socktb, sockfd, tp->buf, rvpl);
@@ -160,54 +185,37 @@ void processTou::run(int sockfd) {
 		
 		case PROCESS_ACK_WITH_DATA_LESS_EXPECTED_SEQ:
 			lg.logData("[PROCESSTOU MSG] PROCESS_ACK_WITH_DATA_LESS_EXPECTED_SEQ", 
-					TOULOG_ALL|TOULOG_PTSRN);
+					TOULOG_ALL);
 
 			lg.logData(">> Discard it. Packet sequence number: " + lg.c2s(tp->t.seq)
-					, TOULOG_ALL|TOULOG_PTSRN);
+					, TOULOG_ALL);
+
+			/* throughput test */
+			if (calThroughput()) ;
 
 			state = PROCESS_ACK_DATARECSUCC_SENDBACK_ACK;
 		break;
 		
 		case PROCESS_ACK_WITH_DATA_MORE_EXPECTED_SEQ:
 			lg.logData("[PROCESSTOU MSG] PROCESS_ACK_WITH_DATA_MORE_EXPECTED_SEQ", 
-					TOULOG_ALL|TOULOG_PTSRN);
+					TOULOG_ALL);
 
-			/*
-			// test sent pkt lost 
-			if(tp->t.seq == 19873 && pktlosttest_int ){
-			std::cout << "\n *** pkg 19873 lost test: no ack once PKTLOSTTEST ****\n";
-			std::cout << " *** pkg 19873 lost test: no ack once PKTLOSTTEST ****\n\n";
-			// FOR TEST 
-			goto PKTLOSTTEST;
-			}
-			*/
-
-			/* test sent pkt lost */
-			if(tp->t.seq == 21329 && pktlosttest_int ){
-			std::cout << "\n *** pkg 21329 lost test: no ack once PKTLOSTTEST ****\n";
-			std::cout << " *** pkg 21329 lost test: no ack once PKTLOSTTEST ****\n\n";
-			goto PKTLOSTTEST;
-			}
-
-			/* test sent pkt lost */
-			if(tp->t.seq == 24241 && pktlosttest_int ){
-			std::cout << "\n *** pkg 24241 lost test: no ack once PKTLOSTTEST ****\n";
-			std::cout << " *** pkg 24241 lost test: no ack once PKTLOSTTEST ****\n\n";
-			pktlosttest_int = 0;
-			/* FOR TEST */goto PKTLOSTTEST;
-			}
+			//througput test
+			if (calThroughput()) 
+				goto PKTLOSTTEST;
+			// End of throughput test
 
 			socktb->pushHpRecvBuf(*tp);
 			lg.logData(">> Push into HpRecvBuf. Packet seq #: " + lg.c2s(tp->t.seq) +
 					" Size of HpRecvBuf is: " + lg.c2s(socktb->HpRecvBuf.size()) , 
-					TOULOG_ALL|TOULOG_PTSRN);
+					TOULOG_ALL);
 
 			state = PROCESS_ACK_DATARECSUCC_SENDBACK_ACK;
 		break;
 		
 		case PROCESS_ACK_DATARECSUCC_SENDBACK_ACK:
 			lg.logData("[PROCESSTOU MSG] PROCESS_ACK_DATARECSUCC_SENDBACK_ACK", 
-					TOULOG_ALL|TOULOG_PTSRN);
+					TOULOG_ALL);
 
 			/* Sending ACK back to sender */
 			pkgack.clean();
@@ -215,7 +223,7 @@ void processTou::run(int sockfd) {
 					socktb->dport);
 			pkgack.putHeaderSeq(socktb->tc.snd_nxt, socktb->tc.rcv_nxt);
 			pkgack.t.ack = FLAGON;
-			pkgack.printall();
+			//pkgack.log();
 			pkgackcontent = pkgack.toString();
 			sendto(sockfd, pkgackcontent.data(), pkgackcontent.size(), 0, 
 					(struct sockaddr *)&sockaddrs, sizeof(sockaddrs));
@@ -231,11 +239,18 @@ void processTou::run(int sockfd) {
 	}/* END OF SWITCH */
 	}/* END OF WHILE(STATE) LOOP */
 
-	PKTLOSTTEST: /* for test */
-	socktb->printall();
-	cout << " *** Leaving process tou *** " << endl;
+	PKTLOSTTEST: ;/* for test */
+  socktb->log(TOULOG_ALL);	
+	lg.logData("[PROCESSTOU MSG] ****** PROCESSTOU END ******", TOULOG_ALL);
+
 	/* delete received tou pakcet */
+	delete tp;
+
+	///////////////////////////////////////////////////////////////////////////////midterm test throughput ///
+	fprintf(ofile, "%d\n", socktb->tc.snd_nxt);
+
 }/* END of processtou */
+
 
 /**
  * processGetPktState
@@ -275,23 +290,30 @@ int processTou::processGetPktState(touPkg *tp){
 		return PROCESS_ACK_WITH_DATA_MORE_EXPECTED_SEQ;
 
   cerr << "[PROCESSTOU] state error : PROCESS_END \n";
-	socktb->printall();
-	tp->printall();
-	exit(1);
+	socktb->log(TOULOG_PTSRN);
+	tp->log(TOULOG_PTSRN);
 	return PROCESS_END;
 }
 
+/**
+ * popsndq:
+ * return number of bytes popped.
+ * return 0 on nothing to pop.
+ * return -1 on an error occurs.
+ */
 int processTou::popsndq(sockTb *socktb, char *sendbuf, int len) {
-	//boost::mutex::scoped_lock lock(sndqmutex);
-	int	bread, end;
-	memset(sendbuf, 0, TOU_MSS);
+	int	bread = 0, dread = 0, end;
+	memset(sendbuf, NULL, TOU_MSS);
 
 	/* try to get data form circular buffer */
-	if( 0 < (bread = socktb->CbSendBuf.getAt(sendbuf, len, end))) {
-		socktb->CbSendBuf.remove(bread);
-		return bread;
+	if ( 0 < (bread = socktb->CbSendBuf.getAt(sendbuf, len, end))){
+		dread = socktb->CbSendBuf.remove(bread);
+
+		if (bread != dread)
+			bread = -1;
 	}
-	return 0;
+
+	return bread;
 }
 
 /* get the sockaddr_in infomation */
@@ -309,16 +331,18 @@ int processTou::assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_family,
 /* push data into circular buf */
 int processTou::putcircbuf(sockTb *socktb, int sockfd, std::string *str, int rvpl){
 	int lenofcb;
-	char buf[str->size()];
-	strncpy(buf, str->c_str(), str->size());
 
-	/* Try to put data into circular buff */
+
+	counter += rvpl;
+	cerr << "rvpl: " << rvpl << " count: " << counter << endl;
+
+	/* Try to put data into circular buf */
 	if( rvpl <= (lenofcb = (socktb->CbRecvBuf.getAvSize())) ){
 		// insert all of buf into cb
-		lenofcb = sm->setCbData(buf, rvpl, sockfd);
+		lenofcb = sm->setCbData(str->data(), rvpl, sockfd);
 	}else{
 		// just insert size of available cb
-		lenofcb = sm->setCbData(buf, lenofcb, sockfd);
+		lenofcb = sm->setCbData(str->data(), lenofcb, sockfd);
 	}
 	return lenofcb;
 }
@@ -337,18 +361,19 @@ void processTou::send(int sockfd) {
 	assignaddr(&sockaddrs, AF_INET, socktb->dip, socktb->dport);
 
 	lg.logData("[PROCESSTOU SEND] # of bytes in the circ buff: " +
-			lg.c2s(socktb->CbSendBuf.getTotalElements()), TOULOG_ALL|TOULOG_PTSRN);
+			lg.c2s(socktb->CbSendBuf.getTotalElements()), TOULOG_ALL);
+
+  /* TEST: For testing throughputrecord time when data in circular buf has been sent out */
+	if (socktb->CbSendBuf.getTotalElements()==0) gettimeofday(&tend, NULL);
 
 	/* get the current window size */
 	sndsize = getSendSize(socktb);
 
-	socktb->printall();//TEST
 	lg.logData("[PROCESSTOU SEND] # of bytes can be sent base on window size: " +
-			lg.c2s(sndsize), TOULOG_ALL|TOULOG_PTSRN);
+			lg.c2s(sndsize), TOULOG_ALL);
 
 	while ((0 < socktb->CbSendBuf.getTotalElements() ) && 
 			(0 < (sndsize = getSendSize(socktb)) )) {
-
 		/* Deciding how many bytes can be sent in this packet.
 		 * >= available size is bigger than MSS, so send # of size of SMSS
 		 * else wnd available for sending is less than SMSS, send sndsize*/
@@ -362,10 +387,14 @@ void processTou::send(int sockfd) {
 		// snd_nxt move on
 		socktb->tc.snd_nxt += len;
 
+		// for midterm demo
+		fprintf(ofile_cwnd, "%d, %d\n", cwnd_counter++, (int)(socktb->tc.snd_cwnd/TOU_SMSS));
+
 		// sending
 		lg.logData("[PROCESSTOU SEND] >>> [SEND] data length sent: " + lg.c2s(len) +
-				", and original sndsize is: " + lg.c2s(sndsize), TOULOG_ALL|TOULOG_PTSRN);
-		toupkg->printall();
+				", and original sndsize is: " + lg.c2s(sndsize), TOULOG_ALL);
+		toupkg->log();
+
 		string sendcontent = toupkg->toString();
 		sendto(sockfd, sendcontent.data(), sendcontent.size(), 0, 
 				(struct sockaddr *)&sockaddrs, sizeof(sockaddr));
@@ -374,9 +403,8 @@ void processTou::send(int sockfd) {
 		tm1.add(sockfd, 88, toupkg->t.seq + len, socktb, toupkg->buf);
 
 	}//End of while
-
-	cout << " *** LEAVE: processtou::send " <<endl;
 }
+
 
 /**
  * getSendSize(sockTb &socktb):
@@ -392,5 +420,47 @@ unsigned long processTou::getSendSize(sockTb *socktb) {
 	}
 
 	return sndsize;
+}
+
+
+/**
+ * setThroughput(int lossnum, int totalnum):
+ * test function
+ */
+int* processTou::setThroughput(int lossnum, int totalnum) {
+	int randnum;
+	this->totalnum = totalnum;
+	pktiterator = 0;
+
+	pktnum =  new int[totalnum];
+	for(int i=0; i<totalnum; i++)
+		pktnum[i] = 0;
+
+	srand((unsigned) time(0));
+	for(int i=0; i<lossnum; i++){
+		randnum = (rand()%totalnum);
+		if (pktnum[randnum] == 1) i--;
+		pktnum[randnum] = 1;
+	}
+
+	return pktnum;
+}
+
+
+/**
+ * calThroughput():
+ * return true in meeting the jmped pkt
+ * retrun false in normal pkt
+ */
+bool processTou::calThroughput() {
+	bool retval = false;
+	if (pktiterator <= totalnum) {
+		if ((pktnum[pktiterator++] == 1) && (totalnum > 0)) {
+			cout<<"pktiterator : "<< (pktiterator-1) << " totalnum: "<<totalnum <<endl;
+			retval = true;
+		}
+	}
+
+	return retval;
 }
 

@@ -12,6 +12,7 @@
 #include <boost/timer.hpp>
 #include <boost/system/system_error.hpp>
 #include <string>
+#include <cstdlib> 
 
 #define PROCESS_END 0
 #define PROCESS_SYN 1
@@ -53,6 +54,8 @@ class processTou {
 			std::cout<< "*** processTou(int sd, sockMng *sm) is activized now ***\n";
 			sockfd = sd;
 			sm = sockmng;
+			pktiterator = 0;
+			totalnum = 0;
 		}
 		/**
 		 * destructor
@@ -73,16 +76,32 @@ class processTou {
 		 * sending pkt from circular buffer to network
 		 */
 		void send(int sockfd);
+
+		/**
+		 * testing the throughput
+		 */
+		int* setThroughput(int lossnum, int totalnum);
+
+		/* tend: For testing throughput. 
+		 * It records the end time when data in circular buffer has been sent out.
+		 */
+		struct timeval				tend;
+
   private:
     int										sockfd;
 		sockMng								*sm;
 	  sockTb								*socktb;
-		//touPkg								*tp;
+		//touPkg							*tp;
     struct sockaddr_in		sockaddrs;
+		int										totalnum;
+		int										pktiterator;
+		int										*pktnum;
 
 		int popsndq(sockTb *socktb, char *sendbuf, int len);
 		int putcircbuf(sockTb *socktb, int sockfd, std::string  *buf, int rvpl);
 		int processGetPktState(touPkg *pkt);
 		int assignaddr(struct sockaddr_in *sockaddr, sa_family_t sa_family, std::string ip, unsigned short port);
 		unsigned long getSendSize(sockTb *socktb);
+		bool calThroughput();
+
 };

@@ -826,7 +826,10 @@ timerMng.o timerMng.o: timerMng.cpp timer.h touSockTable.h \
   ../../boostlib/boost_1_40_0/boost/thread/shared_mutex.hpp \
   ../../boostlib/boost_1_40_0/boost/thread/pthread/shared_mutex.hpp \
   ../../boostlib/boost_1_40_0/boost/thread/barrier.hpp touCongestion.h \
-  touControlBlock.h circularBuffer.h touHeader.h \
+  touControlBlock.h circularBuffer.h touHeader.h Logger.h \
+  /usr/include/c++/4.2/fstream \
+  /usr/include/c++/4.2/i486-linux-gnu/bits/basic_file.h \
+  /usr/include/c++/4.2/bits/fstream.tcc \
   ../../boostlib/boost_1_40_0/boost/date_time/posix_time/posix_time.hpp \
   ../../boostlib/boost_1_40_0/boost/date_time/posix_time/time_formatters.hpp \
   ../../boostlib/boost_1_40_0/boost/date_time/gregorian/gregorian.hpp \
@@ -2801,6 +2804,14 @@ touControlBlock.h:
 circularBuffer.h:
 
 touHeader.h:
+
+Logger.h:
+
+/usr/include/c++/4.2/fstream:
+
+/usr/include/c++/4.2/i486-linux-gnu/bits/basic_file.h:
+
+/usr/include/c++/4.2/bits/fstream.tcc:
 
 ../../boostlib/boost_1_40_0/boost/date_time/posix_time/posix_time.hpp:
 

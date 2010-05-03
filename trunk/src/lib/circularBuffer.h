@@ -20,8 +20,8 @@ public:
     Number of bytes inserted. If n > size of the buffer, then only
     insert n-size elements.
    */
-  int insert(char* buf, int n);
-  int insert(char* buf, int n, int& start, int& end);
+  int insert(const char* buf, int n);
+  int insert(const char* buf, int n, int& start, int& end);
 
   /*
     Remove n bytes from the start of the queue. If n > size, then only

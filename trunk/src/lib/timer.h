@@ -18,10 +18,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/timer.hpp>
 
-/* logging */
-extern Logger lg;
-
-/* time that timer would wait for each loop iteration in doit() func.*/
+/* time(ms) that timer would wait for each loop iteration in doit() func.*/
 #define TIMER_WT	500
 
 /* type ofr socket file descriptor */
@@ -99,6 +96,7 @@ public:
   ~node_t (){
     //delete payload; 
   };
+
   conn_id c_id;
   time_id t_id;
   seq_id p_id;

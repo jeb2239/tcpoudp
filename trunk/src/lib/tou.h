@@ -72,9 +72,8 @@ typedef unsigned char	u_char;
 
 #include "timer.h"				//tou timer library
 #include "processtou.h"
-#include "trace.h"				//for debug
+#include "timestamp.h"
 
-extern FILE *_fptrace;
 extern timerMng tm1;
 extern boost::shared_ptr<boost::thread> m_thread;
 
@@ -93,13 +92,10 @@ class touMain {
   touMain() : sm() {
   }
 
-	/* tou packet */
-  touPkg tp;
-	/* 
-	 *TOU socket table management 
-	 */
-  sockMng sm;
-  processTou *ptou;	/* process TOU*/	
+  touPkg tp;				// ToU packet
+  sockMng sm;				// ToU socket table management
+  processTou *ptou;	//process TOU
+
 	int touSocket(int , int , int );
 	int touAccept(int , struct sockaddr_in *, socklen_t * );
 	int touConnect(int , struct sockaddr_in *, int );
@@ -115,7 +111,6 @@ class touMain {
 
 	void convertToByteOrder(touPkg&);
 	void convertFromByteOrder(touPkg&);
-	int timero(int , int);
 	int assignaddr(struct sockaddr_in *, sa_family_t , std::string , u_short);
 	void dothis(int );
 };	
