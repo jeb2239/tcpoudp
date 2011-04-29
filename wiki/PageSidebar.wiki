@@ -1,20 +1,18 @@
 #labels Featured
-*Outline*
+= *Outline* TCP-over-UDP =
 
-= TCP-over-UDP =
+#[http://code.google.com/p/tcpoudp/ ABSTRACT]
 
-# [http://code.google.com/p/tcpoudp/ ABSTRACT]
+#[ToUIntroduction INTRODUCTION]
 
-# [ToUIntroduction INTRODUCTION]
+#[ToURelated RELATED]
 
-# RELATED
+#[ToUBackground BACKGROUND]
 
-# BACKGROUND
+#[ToUArchitecture ARCHITECTURE]
 
-# ARCHITECTURE
+#[ToUMeasurements MEASUREMENTS]
 
-# MEASUREMENTS
+#[ToUTaskList TASK LIST]
 
-# TASK LIST
-
-# REFERENCES
+#[ToUReferences REFERENCES]
