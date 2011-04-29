@@ -3,7 +3,7 @@
 
 = TCP-over-UDP =
 
-# [ABSTRACT]
+# [http://code.google.com/p/tcpoudp/ ABSTRACT]
 
 # INTRODUCTION
 
