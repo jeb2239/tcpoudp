@@ -1,0 +1,7 @@
+= Background =
+
+== UDP ==
+UDP uses a simple transmission model without implicit hand-shaking dialogues for guaranteeing reliability, ordering, or data integrity. Thus, UDP provides an unreliable service and datagram may arrive out of order, appear duplicate, or go missing without awareness of hosts. UDP assumes that the error checking and correction is either not necessary or performed in the application, avoiding the overhead of such processing at the network transport level.
+
+== TCP ==
+TCP provides a connection-oriented, reliable, and byte stream service. Firstly, the term connection-oriented means the two applications using TCP must establish a TCP connection before they can exchange data. Secondly, for achieving reliability, TCP assigns a sequence number to each byte transmitted, and expects a positive acknowledgment (ACK) from the receiving TCP. If the ACK is not received within a timeout interval, the data is retransmitted. The receiving TCP uses the sequence numbers to rearrange the segments when they arrive out of order, and to eliminate duplicate segments.  Finally, TCP transfers a continuous stream of bytes. TCP does this by grouping the bytes in TCP segments, which are passed to IP for transmission to the destination. TCP itself decides how to segment the data and it may forward the data at its own convenience. In addition to the properties above, TCP is also a full duplex protocol, meaning that each TCP connection supports a pair of byte streams, one flowing in each direction.
