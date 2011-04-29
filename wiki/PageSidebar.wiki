@@ -2,11 +2,9 @@
 = Outline =
 == TCP-over-UDP ==
 
-  #[http://code.google.com/p/tcpoudp/ ABSTRACT]
-
-  #[ToUIntroduction INTRODUCTION]
-
-#[ToURelated RELATED]
+  # [http://code.google.com/p/tcpoudp/ ABSTRACT]
+  # [ToUIntroduction INTRODUCTION]
+  # [ToURelated RELATED]
 
 #[ToUBackground BACKGROUND]
 
