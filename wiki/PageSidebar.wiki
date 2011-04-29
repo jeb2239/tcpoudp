@@ -1,9 +1,10 @@
 #labels Featured
-= *Outline* TCP-over-UDP =
+= Outline =
+== TCP-over-UDP ==
 
-#[http://code.google.com/p/tcpoudp/ ABSTRACT]
+  #[http://code.google.com/p/tcpoudp/ ABSTRACT]
 
-#[ToUIntroduction INTRODUCTION]
+  #[ToUIntroduction INTRODUCTION]
 
 #[ToURelated RELATED]
 
