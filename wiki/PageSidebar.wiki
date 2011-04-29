@@ -5,13 +5,8 @@
   # [http://code.google.com/p/tcpoudp/ ABSTRACT]
   # [ToUIntroduction INTRODUCTION]
   # [ToURelated RELATED]
-
-#[ToUBackground BACKGROUND]
-
-#[ToUArchitecture ARCHITECTURE]
-
-#[ToUMeasurements MEASUREMENTS]
-
-#[ToUTaskList TASK LIST]
-
-#[ToUReferences REFERENCES]
+  # [ToUBackground BACKGROUND]
+  # [ToUArchitecture ARCHITECTURE]
+  # [ToUMeasurements MEASUREMENTS]
+  # [ToUTaskList TASK LIST]
+  # [ToUReferences REFERENCES]
